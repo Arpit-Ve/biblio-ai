@@ -1,0 +1,3805 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Biblio AI — Read Smarter. Live the Story.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,800;0,900;1,400;1,700&family=Lora:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Mono:wght@300;400&display=swap"
+    rel="stylesheet" />
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    :root {
+      --ink: #09080d;
+      --midnight: #0f0e18;
+      --panel: #16152200;
+      --surface: #1c1b2a;
+      --border: rgba(212, 160, 60, 0.18);
+      --amber: #d4a03c;
+      --gold: #e8c070;
+      --pale-gold: #f5dfa0;
+      --rust: #b84a1a;
+      --cream: #f5ead8;
+      --parchment: #ede0c8;
+      --text: #e2d5be;
+      --text-dim: #8a7f6e;
+      --text-muted: #504840;
+      --sage: #4e6e52;
+      --teal: #2a5a62;
+    }
+
+    html {
+      scroll-behavior: smooth
+    }
+
+    body {
+      background: var(--midnight);
+      color: var(--text);
+      font-family: 'Lora', Georgia, serif;
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    /* CUSTOM CURSOR */
+    .cursor {
+      position: fixed;
+      width: 10px;
+      height: 10px;
+      background: var(--amber);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%, -50%);
+      transition: transform .1s, width .2s, height .2s;
+      mix-blend-mode: screen
+    }
+
+    .cursor-ring {
+      position: fixed;
+      width: 36px;
+      height: 36px;
+      border: 1.5px solid rgba(212, 160, 60, 0.5);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9998;
+      transform: translate(-50%, -50%);
+      transition: transform .12s ease, width .25s, height .25s;
+      mix-blend-mode: screen
+    }
+
+    /* NOISE OVERLAY */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 1000;
+      opacity: .35;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 500;
+      padding: 1.4rem 5vw;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid transparent;
+      transition: all .4s;
+    }
+
+    nav.scrolled {
+      background: rgba(9, 8, 13, 0.88);
+      backdrop-filter: blur(18px);
+      border-bottom-color: var(--border);
+    }
+
+    .nav-logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.7rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--pale-gold), var(--amber));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -.02em;
+    }
+
+    .nav-logo span {
+      font-style: italic;
+      font-weight: 400
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 2.5rem;
+      list-style: none
+    }
+
+    .nav-links a {
+      font-family: 'DM Mono', monospace;
+      font-size: .75rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      text-decoration: none;
+      transition: color .3s;
+    }
+
+    .nav-links a:hover {
+      color: var(--gold)
+    }
+
+    .nav-cta {
+      font-family: 'DM Mono', monospace;
+      font-size: .75rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      background: transparent;
+      border: 1px solid var(--amber);
+      color: var(--amber);
+      padding: .65rem 1.6rem;
+      border-radius: 2px;
+      cursor: none;
+      transition: all .3s;
+      text-decoration: none;
+    }
+
+    .nav-cta:hover {
+      background: var(--amber);
+      color: var(--ink)
+    }
+
+    /* HERO */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 0 5vw;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 70% 40%, rgba(180, 100, 20, 0.12) 0%, transparent 65%),
+        radial-gradient(ellipse 50% 70% at 10% 80%, rgba(46, 80, 90, 0.15) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 40% at 85% 85%, rgba(90, 40, 10, 0.1) 0%, transparent 55%),
+        var(--midnight);
+      z-index: 0;
+    }
+
+    /* Animated book spine decorations */
+    .book-spines {
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 38vw;
+      display: flex;
+      align-items: stretch;
+      opacity: .18;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .spine {
+      flex: 1;
+      transform-origin: bottom;
+      animation: spineRise 1.8s cubic-bezier(.22, 1, .36, 1) both;
+    }
+
+    .spine:nth-child(1) {
+      background: linear-gradient(180deg, #6b3520, #3d1e10);
+      animation-delay: .1s
+    }
+
+    .spine:nth-child(2) {
+      background: linear-gradient(180deg, #1e3d4f, #0d2030);
+      animation-delay: .2s
+    }
+
+    .spine:nth-child(3) {
+      background: linear-gradient(180deg, #4a3820, #2a2010);
+      animation-delay: .05s
+    }
+
+    .spine:nth-child(4) {
+      background: linear-gradient(180deg, #2d4a30, #1a2d1c);
+      animation-delay: .3s
+    }
+
+    .spine:nth-child(5) {
+      background: linear-gradient(180deg, #503020, #301a10);
+      animation-delay: .15s
+    }
+
+    .spine:nth-child(6) {
+      background: linear-gradient(180deg, #1a3040, #0d1825);
+      animation-delay: .25s
+    }
+
+    .spine:nth-child(7) {
+      background: linear-gradient(180deg, #3a2818, #20150a);
+      animation-delay: .08s
+    }
+
+    .spine:nth-child(8) {
+      background: linear-gradient(180deg, #483010, #281808);
+      animation-delay: .35s
+    }
+
+    .spine:nth-child(9) {
+      background: linear-gradient(180deg, #1c3840, #0e1e25);
+      animation-delay: .18s
+    }
+
+    .spine:nth-child(10) {
+      background: linear-gradient(180deg, #3c2820, #201510);
+      animation-delay: .28s
+    }
+
+    .spine:nth-child(11) {
+      background: linear-gradient(180deg, #2a4020, #162210);
+      animation-delay: .12s
+    }
+
+    .spine:nth-child(12) {
+      background: linear-gradient(180deg, #5a3010, #301808);
+      animation-delay: .22s
+    }
+
+    @keyframes spineRise {
+      from {
+        transform: scaleY(0);
+        opacity: 0
+      }
+
+      to {
+        transform: scaleY(1);
+        opacity: 1
+      }
+    }
+
+    /* Floating particles */
+    .particles {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1
+    }
+
+    .particle {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: var(--gold);
+      border-radius: 50%;
+      animation: float linear infinite;
+      opacity: 0;
+    }
+
+    @keyframes float {
+      0% {
+        transform: translateY(100vh) translateX(0);
+        opacity: 0
+      }
+
+      10% {
+        opacity: .6
+      }
+
+      90% {
+        opacity: .4
+      }
+
+      100% {
+        transform: translateY(-10vh) translateX(var(--drift));
+        opacity: 0
+      }
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 750px
+    }
+
+    .hero-eyebrow {
+      font-family: 'DM Mono', monospace;
+      font-size: .72rem;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--amber);
+      display: flex;
+      align-items: center;
+      gap: .8rem;
+      margin-bottom: 1.8rem;
+      opacity: 0;
+      animation: fadeUp .8s .3s both;
+    }
+
+    .hero-eyebrow::before {
+      content: '';
+      width: 32px;
+      height: 1px;
+      background: var(--amber)
+    }
+
+    .hero-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(3.2rem, 7.5vw, 7.2rem);
+      font-weight: 900;
+      line-height: .95;
+      letter-spacing: -.03em;
+      margin-bottom: 1.6rem;
+      opacity: 0;
+      animation: fadeUp .9s .45s both;
+    }
+
+    .hero-title em {
+      font-style: italic;
+      font-weight: 400;
+      color: var(--gold);
+      position: relative;
+      display: inline-block;
+    }
+
+    .hero-title em::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--amber), transparent);
+    }
+
+    .hero-sub {
+      font-size: 1.15rem;
+      font-weight: 300;
+      line-height: 1.75;
+      color: var(--text-dim);
+      max-width: 520px;
+      margin-bottom: 3rem;
+      opacity: 0;
+      animation: fadeUp .8s .6s both;
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      opacity: 0;
+      animation: fadeUp .8s .75s both;
+    }
+
+    .btn-primary {
+      font-family: 'DM Mono', monospace;
+      font-size: .8rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      background: var(--amber);
+      color: var(--ink);
+      padding: .9rem 2.4rem;
+      border-radius: 2px;
+      border: none;
+      cursor: none;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: .7rem;
+      font-weight: 400;
+      transition: all .3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-primary::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255, 255, 255, .15), transparent);
+      transform: translateX(-100%);
+      transition: transform .4s;
+    }
+
+    .btn-primary:hover::before {
+      transform: translateX(0)
+    }
+
+    .btn-primary:hover {
+      background: var(--pale-gold);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(212, 160, 60, 0.3)
+    }
+
+    .btn-ghost {
+      font-family: 'DM Mono', monospace;
+      font-size: .78rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      background: none;
+      border: none;
+      cursor: none;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: .6rem;
+      transition: color .3s;
+    }
+
+    .btn-ghost:hover {
+      color: var(--text)
+    }
+
+    .btn-ghost svg {
+      opacity: .5;
+      transition: transform .3s, opacity .3s
+    }
+
+    .btn-ghost:hover svg {
+      transform: translateX(4px);
+      opacity: 1
+    }
+
+    .hero-stats {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      gap: 3rem;
+      margin-top: 5rem;
+      opacity: 0;
+      animation: fadeUp .8s .9s both;
+      padding-top: 2.5rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .stat-val {
+      font-family: 'Playfair Display', serif;
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--pale-gold);
+      letter-spacing: -.02em;
+    }
+
+    .stat-label {
+      font-family: 'DM Mono', monospace;
+      font-size: .65rem;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-top: .2rem;
+    }
+
+    /* MARQUEE */
+    .marquee-wrap {
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 1.2rem 0;
+      overflow: hidden;
+      background: rgba(212, 160, 60, 0.04);
+    }
+
+    .marquee-track {
+      display: flex;
+      gap: 3rem;
+      animation: marquee 28s linear infinite;
+      width: max-content;
+    }
+
+    .marquee-item {
+      font-family: 'DM Mono', monospace;
+      font-size: .7rem;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .marquee-item::before {
+      content: '◆';
+      color: var(--amber);
+      font-size: .5rem
+    }
+
+    @keyframes marquee {
+      from {
+        transform: translateX(0)
+      }
+
+      to {
+        transform: translateX(-50%)
+      }
+    }
+
+    /* SECTIONS */
+    section {
+      padding: 8rem 5vw
+    }
+
+    .section-label {
+      font-family: 'DM Mono', monospace;
+      font-size: .7rem;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--amber);
+      display: flex;
+      align-items: center;
+      gap: .8rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .section-label::before {
+      content: '';
+      width: 24px;
+      height: 1px;
+      background: var(--amber)
+    }
+
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.2rem, 4.5vw, 3.8rem);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -.02em;
+      margin-bottom: 1.2rem;
+    }
+
+    .section-title em {
+      font-style: italic;
+      color: var(--gold)
+    }
+
+    .section-sub {
+      font-size: 1.05rem;
+      font-weight: 300;
+      line-height: 1.8;
+      color: var(--text-dim);
+      max-width: 500px;
+    }
+
+    /* FEATURES GRID */
+    .features {
+      background: linear-gradient(180deg, var(--midnight) 0%, #0b0a14 100%)
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1.5px;
+      margin-top: 4.5rem;
+      border: 1.5px solid var(--border);
+      overflow: hidden;
+      border-radius: 4px;
+    }
+
+    .feat-card {
+      padding: 2.8rem 2.4rem;
+      background: var(--surface);
+      position: relative;
+      overflow: hidden;
+      transition: background .4s;
+    }
+
+    .feat-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(212, 160, 60, 0.06), transparent);
+      opacity: 0;
+      transition: opacity .4s;
+    }
+
+    .feat-card:hover {
+      background: #201f30
+    }
+
+    .feat-card:hover::before {
+      opacity: 1
+    }
+
+    .feat-icon {
+      font-size: 1.8rem;
+      margin-bottom: 1.4rem;
+      display: block;
+      filter: saturate(1.2);
+    }
+
+    .feat-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: .7rem;
+      color: var(--parchment);
+    }
+
+    .feat-desc {
+      font-size: .9rem;
+      font-weight: 300;
+      line-height: 1.75;
+      color: var(--text-dim);
+    }
+
+    .feat-tag {
+      font-family: 'DM Mono', monospace;
+      font-size: .6rem;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-top: 1.2rem;
+      display: block;
+      opacity: .7;
+    }
+
+    /* READER PREVIEW */
+    .reader-section {
+      background: #0b0a14;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .reader-section::before {
+      content: '';
+      position: absolute;
+      top: -30%;
+      left: -10%;
+      width: 60%;
+      padding-bottom: 60%;
+      background: radial-gradient(circle, rgba(180, 100, 20, 0.07), transparent 70%);
+      pointer-events: none;
+    }
+
+    .reader-layout {
+      display: grid;
+      grid-template-columns: 1fr 1.1fr;
+      gap: 5rem;
+      align-items: center;
+    }
+
+    .reader-mock {
+      background: #12111c;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 40px 80px rgba(0, 0, 0, .5), 0 0 0 1px rgba(212, 160, 60, .08);
+      transform: perspective(1000px) rotateY(4deg) rotateX(2deg);
+      transition: transform .5s;
+    }
+
+    .reader-mock:hover {
+      transform: perspective(1000px) rotateY(0deg) rotateX(0deg)
+    }
+
+    .reader-toolbar {
+      background: #0e0d18;
+      padding: .8rem 1.4rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .reader-toolbar-title {
+      font-family: 'DM Mono', monospace;
+      font-size: .65rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .reader-dots {
+      display: flex;
+      gap: .5rem
+    }
+
+    .reader-dots span {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(212, 160, 60, .25);
+    }
+
+    .reader-dots span:first-child {
+      background: rgba(184, 74, 26, .4)
+    }
+
+    .reader-body {
+      padding: 2.2rem
+    }
+
+    .reader-chapter {
+      font-family: 'DM Mono', monospace;
+      font-size: .62rem;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-bottom: .8rem;
+    }
+
+    .reader-heading {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--parchment);
+      margin-bottom: 1.2rem;
+    }
+
+    .reader-text {
+      font-size: .85rem;
+      line-height: 1.85;
+      color: var(--text-dim);
+    }
+
+    .reader-text .highlight {
+      background: rgba(212, 160, 60, .18);
+      color: var(--gold);
+      border-radius: 2px;
+      padding: 0 3px;
+      position: relative;
+      cursor: none;
+    }
+
+    .word-popup {
+      position: absolute;
+      bottom: 110%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1e1c2c;
+      border: 1px solid var(--border);
+      padding: .6rem .9rem;
+      border-radius: 4px;
+      font-family: 'DM Mono', monospace;
+      font-size: .65rem;
+      white-space: nowrap;
+      color: var(--parchment);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .4);
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .word-popup::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 5px solid transparent;
+      border-top-color: #1e1c2c;
+    }
+
+    .reader-ai-bar {
+      margin-top: 1.6rem;
+      padding-top: 1.4rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: .7rem;
+      flex-wrap: wrap;
+    }
+
+    .ai-pill {
+      font-family: 'DM Mono', monospace;
+      font-size: .6rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      padding: .4rem .9rem;
+      border-radius: 20px;
+      transition: all .3s;
+      cursor: none;
+    }
+
+    .ai-pill:hover,
+    .ai-pill.active {
+      border-color: var(--amber);
+      color: var(--amber);
+      background: rgba(212, 160, 60, .08);
+    }
+
+    .reader-progress {
+      height: 3px;
+      background: rgba(212, 160, 60, .12);
+      margin-top: 1.6rem;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .reader-progress-fill {
+      height: 100%;
+      width: 35%;
+      background: linear-gradient(90deg, var(--rust), var(--amber));
+      border-radius: 2px;
+    }
+
+    .reader-info {
+      padding-left: 1rem
+    }
+
+    .feature-list {
+      margin-top: 3rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.4rem
+    }
+
+    .feature-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 1.2rem;
+      padding: 1.4rem;
+      background: rgba(255, 255, 255, .03);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      transition: border-color .3s, background .3s;
+    }
+
+    .feature-row:hover {
+      border-color: rgba(212, 160, 60, .35);
+      background: rgba(212, 160, 60, .04);
+    }
+
+    .feature-row-icon {
+      font-size: 1.4rem;
+      flex-shrink: 0;
+      margin-top: .1rem;
+    }
+
+    .feature-row-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--parchment);
+      margin-bottom: .35rem;
+    }
+
+    .feature-row-desc {
+      font-size: .85rem;
+      line-height: 1.65;
+      color: var(--text-dim);
+      font-weight: 300;
+    }
+
+    /* SOCIAL */
+    .social-section {
+      background: var(--midnight)
+    }
+
+    .social-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 5rem;
+      align-items: center;
+      margin-top: 4rem;
+    }
+
+    .profile-mock {
+      background: #13121f;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 2rem;
+      box-shadow: 0 30px 60px rgba(0, 0, 0, .4);
+    }
+
+    .profile-header {
+      display: flex;
+      align-items: center;
+      gap: 1.2rem;
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .avatar {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--rust), var(--amber));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Playfair Display', serif;
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--ink);
+      flex-shrink: 0;
+    }
+
+    .profile-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--parchment);
+    }
+
+    .profile-handle {
+      font-family: 'DM Mono', monospace;
+      font-size: .65rem;
+      color: var(--text-muted);
+      margin-top: .2rem;
+    }
+
+    .badge {
+      margin-left: auto;
+      background: linear-gradient(135deg, rgba(212, 160, 60, .2), rgba(212, 160, 60, .08));
+      border: 1px solid var(--amber);
+      color: var(--amber);
+      font-family: 'DM Mono', monospace;
+      font-size: .58rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      padding: .35rem .8rem;
+      border-radius: 20px;
+    }
+
+    .reading-now {
+      margin-bottom: 1.5rem;
+    }
+
+    .reading-now-label {
+      font-family: 'DM Mono', monospace;
+      font-size: .6rem;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: .8rem;
+    }
+
+    .book-card-mini {
+      background: #0e0d18;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1rem;
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .book-cover-mini {
+      width: 38px;
+      height: 52px;
+      border-radius: 3px;
+      flex-shrink: 0;
+      background: linear-gradient(135deg, #4a2010, #2a1008);
+    }
+
+    .book-mini-title {
+      font-family: 'Playfair Display', serif;
+      font-size: .85rem;
+      font-weight: 600;
+      color: var(--parchment);
+    }
+
+    .book-mini-author {
+      font-family: 'DM Mono', monospace;
+      font-size: .6rem;
+      color: var(--text-muted);
+      margin-top: .2rem;
+    }
+
+    .book-mini-progress {
+      margin-top: .7rem;
+      height: 2px;
+      background: rgba(212, 160, 60, .12);
+      border-radius: 2px;
+    }
+
+    .book-mini-progress span {
+      display: block;
+      height: 100%;
+      width: 62%;
+      background: var(--amber);
+      border-radius: 2px;
+    }
+
+    .streak-row {
+      display: flex;
+      gap: .5rem;
+      margin-top: 1.5rem;
+    }
+
+    .streak-day {
+      flex: 1;
+      height: 32px;
+      border-radius: 3px;
+      background: rgba(212, 160, 60, .12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'DM Mono', monospace;
+      font-size: .55rem;
+      color: var(--text-muted);
+      transition: background .2s;
+    }
+
+    .streak-day.read {
+      background: rgba(212, 160, 60, .35);
+      color: var(--amber)
+    }
+
+    .streak-day.today {
+      background: var(--amber);
+      color: var(--ink);
+      font-weight: 700
+    }
+
+    .streak-info {
+      font-family: 'DM Mono', monospace;
+      font-size: .65rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-top: .8rem;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+
+    .streak-info strong {
+      color: var(--amber);
+      font-size: .8rem
+    }
+
+    .social-text-side {
+      padding-left: 1rem
+    }
+
+    .social-features {
+      margin-top: 2.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem
+    }
+
+    .sf-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      font-size: .9rem;
+      color: var(--text-dim);
+      font-weight: 300;
+    }
+
+    .sf-row::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--amber);
+      flex-shrink: 0;
+    }
+
+    /* AI FEATURES */
+    .ai-section {
+      background: linear-gradient(135deg, #0b0a14 0%, #0f0e18 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .ai-section::after {
+      content: '';
+      position: absolute;
+      bottom: -20%;
+      right: -10%;
+      width: 50%;
+      padding-bottom: 50%;
+      background: radial-gradient(circle, rgba(46, 90, 98, 0.08), transparent 70%);
+      pointer-events: none;
+    }
+
+    .ai-cards {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5px;
+      margin-top: 4rem;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .ai-card {
+      padding: 2.4rem;
+      background: var(--surface);
+      position: relative;
+      transition: background .3s;
+    }
+
+    .ai-card:hover {
+      background: #1f1e2e
+    }
+
+    .ai-card-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 3.5rem;
+      font-weight: 800;
+      color: rgba(212, 160, 60, .12);
+      line-height: 1;
+      margin-bottom: 1rem;
+      letter-spacing: -.04em;
+    }
+
+    .ai-card-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--parchment);
+      margin-bottom: .7rem;
+    }
+
+    .ai-card-body {
+      font-size: .88rem;
+      line-height: 1.75;
+      color: var(--text-dim);
+      font-weight: 300;
+    }
+
+    .ai-demo {
+      margin-top: 1.4rem;
+      background: rgba(0, 0, 0, .25);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1rem 1.2rem;
+      font-family: 'DM Mono', monospace;
+      font-size: .7rem;
+      color: var(--text-dim);
+      line-height: 1.7;
+    }
+
+    .ai-demo .label {
+      color: var(--amber);
+      display: block;
+      margin-bottom: .4rem;
+      letter-spacing: .1em
+    }
+
+    .ai-demo .response {
+      color: var(--text)
+    }
+
+    /* WRITER */
+    .writer-section {
+      background: #0b0a14
+    }
+
+    .writer-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5rem;
+      align-items: start;
+      margin-top: 4rem;
+    }
+
+    .editor-mock {
+      background: #12111c;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 30px 60px rgba(0, 0, 0, .4);
+    }
+
+    .editor-bar {
+      background: #0e0d18;
+      padding: .7rem 1.2rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .editor-bar-btn {
+      font-family: 'DM Mono', monospace;
+      font-size: .62rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      cursor: none;
+      transition: color .2s;
+    }
+
+    .editor-bar-btn:hover,
+    .editor-bar-btn.active {
+      color: var(--amber)
+    }
+
+    .editor-content {
+      padding: 2rem
+    }
+
+    .editor-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--parchment);
+      margin-bottom: 1.2rem;
+      border-bottom: 2px solid var(--amber);
+      padding-bottom: .5rem;
+      display: inline-block;
+    }
+
+    .editor-body {
+      font-size: .88rem;
+      line-height: 1.9;
+      color: var(--text-dim);
+      font-weight: 300;
+    }
+
+    .cursor-blink {
+      display: inline-block;
+      width: 2px;
+      height: 1em;
+      background: var(--amber);
+      vertical-align: middle;
+      animation: blink 1s step-end infinite;
+      margin-left: 1px;
+    }
+
+    @keyframes blink {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: 0
+      }
+    }
+
+    .ai-suggestion {
+      margin-top: 1rem;
+      background: rgba(212, 160, 60, .06);
+      border-left: 3px solid var(--amber);
+      padding: .8rem 1rem;
+      border-radius: 0 4px 4px 0;
+      font-size: .82rem;
+      line-height: 1.7;
+      color: rgba(212, 160, 60, .7);
+      font-style: italic;
+    }
+
+    .ai-suggestion::before {
+      content: '✦ AI Suggests: ';
+      font-family: 'DM Mono', monospace;
+      font-size: .6rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      font-style: normal;
+      color: var(--amber);
+      display: block;
+      margin-bottom: .3rem;
+    }
+
+    .writer-perks {
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+      margin-top: 2.5rem;
+    }
+
+    .perk {
+      display: flex;
+      gap: 1.2rem;
+      padding: 1.2rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: rgba(255, 255, 255, .02);
+      transition: border-color .3s;
+    }
+
+    .perk:hover {
+      border-color: rgba(212, 160, 60, .3)
+    }
+
+    .perk-icon {
+      font-size: 1.3rem;
+      flex-shrink: 0;
+      margin-top: .1rem
+    }
+
+    .perk-title {
+      font-family: 'Playfair Display', serif;
+      font-size: .95rem;
+      font-weight: 600;
+      color: var(--parchment);
+      margin-bottom: .3rem;
+    }
+
+    .perk-desc {
+      font-size: .82rem;
+      color: var(--text-dim);
+      line-height: 1.6;
+      font-weight: 300
+    }
+
+    /* PRICING */
+    .pricing-section {
+      background: var(--midnight)
+    }
+
+    .plans {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1.5rem;
+      margin-top: 4rem;
+    }
+
+    .plan {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 2.4rem;
+      background: var(--surface);
+      position: relative;
+      transition: all .4s;
+    }
+
+    .plan:hover {
+      border-color: rgba(212, 160, 60, .35);
+      transform: translateY(-4px)
+    }
+
+    .plan.featured {
+      border-color: var(--amber);
+      background: linear-gradient(145deg, #1e1c2e, #1a1828);
+      box-shadow: 0 0 40px rgba(212, 160, 60, .12);
+    }
+
+    .plan-badge {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--amber);
+      color: var(--ink);
+      font-family: 'DM Mono', monospace;
+      font-size: .62rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      padding: .35rem 1rem;
+      border-radius: 20px;
+      font-weight: 700;
+    }
+
+    .plan-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--parchment);
+      margin-bottom: .5rem;
+    }
+
+    .plan-price {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.8rem;
+      font-weight: 800;
+      color: var(--pale-gold);
+      letter-spacing: -.03em;
+      margin: 1rem 0 .3rem;
+    }
+
+    .plan-price sup {
+      font-size: 1.3rem;
+      vertical-align: top;
+      margin-top: .5rem
+    }
+
+    .plan-price sub {
+      font-size: .9rem;
+      color: var(--text-dim);
+      font-weight: 300
+    }
+
+    .plan-tagline {
+      font-size: .82rem;
+      color: var(--text-dim);
+      margin-bottom: 2rem;
+      font-weight: 300;
+    }
+
+    .plan-features {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: .8rem;
+      margin-bottom: 2rem;
+    }
+
+    .plan-features li {
+      font-size: .85rem;
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      gap: .7rem;
+      font-weight: 300;
+    }
+
+    .plan-features li::before {
+      content: '✓';
+      color: var(--amber);
+      font-size: .75rem;
+      flex-shrink: 0;
+      font-weight: 700;
+    }
+
+    .plan-features li.off {
+      opacity: .35
+    }
+
+    .plan-features li.off::before {
+      content: '×';
+      color: var(--text-muted)
+    }
+
+    .plan-btn {
+      width: 100%;
+      font-family: 'DM Mono', monospace;
+      font-size: .75rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      padding: .85rem;
+      border-radius: 2px;
+      cursor: none;
+      transition: all .3s;
+      border: none;
+    }
+
+    .plan-btn.primary {
+      background: var(--amber);
+      color: var(--ink)
+    }
+
+    .plan-btn.primary:hover {
+      background: var(--pale-gold)
+    }
+
+    .plan-btn.outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-dim)
+    }
+
+    .plan-btn.outline:hover {
+      border-color: var(--amber);
+      color: var(--amber)
+    }
+
+    /* FOOTER */
+    footer {
+      background: #090810;
+      padding: 5rem 5vw 3rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .footer-top {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr 1fr 1fr;
+      gap: 4rem;
+      margin-bottom: 4rem;
+    }
+
+    .footer-brand p {
+      font-size: .88rem;
+      line-height: 1.8;
+      color: var(--text-dim);
+      margin-top: 1rem;
+      font-weight: 300;
+      max-width: 280px;
+    }
+
+    .footer-col h4 {
+      font-family: 'DM Mono', monospace;
+      font-size: .67rem;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 1.2rem;
+    }
+
+    .footer-col ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: .7rem
+    }
+
+    .footer-col a {
+      font-size: .85rem;
+      color: var(--text-dim);
+      text-decoration: none;
+      transition: color .2s;
+      font-weight: 300;
+    }
+
+    .footer-col a:hover {
+      color: var(--amber)
+    }
+
+    .footer-bottom {
+      padding-top: 2rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .footer-copy {
+      font-family: 'DM Mono', monospace;
+      font-size: .65rem;
+      letter-spacing: .1em;
+      color: var(--text-muted);
+    }
+
+    .footer-socials {
+      display: flex;
+      gap: 1.2rem
+    }
+
+    .footer-socials a {
+      font-family: 'DM Mono', monospace;
+      font-size: .65rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color .2s;
+    }
+
+    .footer-socials a:hover {
+      color: var(--amber)
+    }
+
+    /* ANIMATIONS */
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(28px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity .8s, transform .8s
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0)
+    }
+
+    /* SCROLL INDICATOR */
+    .scroll-ind {
+      position: absolute;
+      bottom: 2.5rem;
+      left: 5vw;
+      display: flex;
+      align-items: center;
+      gap: .8rem;
+      font-family: 'DM Mono', monospace;
+      font-size: .62rem;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      z-index: 2;
+      opacity: 0;
+      animation: fadeUp .8s 1.2s both;
+    }
+
+    .scroll-line {
+      width: 40px;
+      height: 1px;
+      background: var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .scroll-line::after {
+      content: '';
+      position: absolute;
+      left: -100%;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--amber);
+      animation: scanline 2s ease-in-out infinite;
+    }
+
+    @keyframes scanline {
+      0% {
+        left: -100%
+      }
+
+      60%,
+      100% {
+        left: 100%
+      }
+    }
+
+    /* RESPONSIVE */
+    @media(max-width:900px) {
+      .features-grid {
+        grid-template-columns: 1fr 1fr
+      }
+
+      .reader-layout,
+      .social-grid,
+      .writer-layout {
+        grid-template-columns: 1fr
+      }
+
+      .plans {
+        grid-template-columns: 1fr
+      }
+
+      .ai-cards {
+        grid-template-columns: 1fr
+      }
+
+      .footer-top {
+        grid-template-columns: 1fr 1fr
+      }
+
+      .reader-mock {
+        transform: none !important
+      }
+
+      .hero-stats {
+        gap: 2rem
+      }
+    }
+
+    @media(max-width:640px) {
+      nav .nav-links {
+        display: none
+      }
+
+      .features-grid {
+        grid-template-columns: 1fr
+      }
+
+      .footer-top {
+        grid-template-columns: 1fr
+      }
+
+      .hero-stats {
+        flex-wrap: wrap;
+        gap: 1.5rem
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Cursor -->
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-ring" id="cursorRing"></div>
+
+  <!-- NAV -->
+  <nav id="navbar">
+    <div class="nav-logo">Biblio<span>AI</span></div>
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#reader">Reader</a></li>
+      <li><a href="#social">Community</a></li>
+      <li><a href="#writer">Write</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+    </ul>
+    <a href="#" class="nav-cta">Start Reading</a>
+    <a href="app.html"
+      style="font-family:'DM Mono',monospace;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;background:rgba(212,160,60,.1);border:1px solid rgba(212,160,60,.4);color:var(--amber);padding:.65rem 1.6rem;border-radius:2px;text-decoration:none;margin-left:.5rem;transition:all .3s"
+      onmouseover="this.style.background='rgba(212,160,60,.2)'"
+      onmouseout="this.style.background='rgba(212,160,60,.1)'">Open App →</a>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero" id="home">
+    <div class="hero-bg"></div>
+    <div class="book-spines">
+      <div class="spine"></div>
+      <div class="spine"></div>
+      <div class="spine"></div>
+      <div class="spine"></div>
+      <div class="spine"></div>
+      <div class="spine"></div>
+      <div class="spine"></div>
+      <div class="spine"></div>
+      <div class="spine"></div>
+      <div class="spine"></div>
+      <div class="spine"></div>
+      <div class="spine"></div>
+    </div>
+    <div class="particles" id="particles"></div>
+    <div class="hero-content">
+      <div class="hero-eyebrow">The Future of Reading is Here</div>
+      <h1 class="hero-title">
+        Read Smarter.<br />
+        <em>Live the Story.</em>
+      </h1>
+      <p class="hero-sub">
+        Biblio AI is your all-in-one intelligent reading companion — combining an entire library, AI-powered
+        understanding, social discovery, and the tools to write your own story.
+      </p>
+      <div class="hero-actions">
+        <a href="#" class="btn-primary">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
+          Get Started Free
+        </a>
+        <a href="#features" class="btn-ghost">
+          Explore Features
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </a>
+      </div>
+      <div class="hero-stats">
+        <div>
+          <div class="stat-val">2M+</div>
+          <div class="stat-label">Books Available</div>
+        </div>
+        <div>
+          <div class="stat-val">50+</div>
+          <div class="stat-label">Languages</div>
+        </div>
+        <div>
+          <div class="stat-val">AI</div>
+          <div class="stat-label">Powered Reading</div>
+        </div>
+        <div>
+          <div class="stat-val">Free</div>
+          <div class="stat-label">To Start</div>
+        </div>
+      </div>
+    </div>
+    <div class="scroll-ind">
+      <div class="scroll-line"></div>
+      Scroll to explore
+    </div>
+  </section>
+
+  <!-- MARQUEE -->
+  <div class="marquee-wrap">
+    <div class="marquee-track" id="marquee">
+      <div class="marquee-item">Chapter Summaries</div>
+      <div class="marquee-item">Live Word Meanings</div>
+      <div class="marquee-item">Reading Streaks</div>
+      <div class="marquee-item">AI Book Suggestions</div>
+      <div class="marquee-item">Word-to-Word Translation</div>
+      <div class="marquee-item">Audiobooks</div>
+      <div class="marquee-item">Author Badges</div>
+      <div class="marquee-item">Write & Publish</div>
+      <div class="marquee-item">Social Reading</div>
+      <div class="marquee-item">Knowledge Quizzes</div>
+      <div class="marquee-item">Personal Dictionary</div>
+      <div class="marquee-item">Reading Tracker</div>
+      <!-- duplicate for infinite scroll -->
+      <div class="marquee-item">Chapter Summaries</div>
+      <div class="marquee-item">Live Word Meanings</div>
+      <div class="marquee-item">Reading Streaks</div>
+      <div class="marquee-item">AI Book Suggestions</div>
+      <div class="marquee-item">Word-to-Word Translation</div>
+      <div class="marquee-item">Audiobooks</div>
+      <div class="marquee-item">Author Badges</div>
+      <div class="marquee-item">Write & Publish</div>
+      <div class="marquee-item">Social Reading</div>
+      <div class="marquee-item">Knowledge Quizzes</div>
+      <div class="marquee-item">Personal Dictionary</div>
+      <div class="marquee-item">Reading Tracker</div>
+    </div>
+  </div>
+
+  <!-- FEATURES -->
+  <section class="features" id="features">
+    <div class="reveal">
+      <div class="section-label">What Biblio AI Offers</div>
+      <h2 class="section-title">Everything a <em>reader</em><br />could ever need</h2>
+      <p class="section-sub">One platform that unifies the best of Kindle, Goodreads, Wattpad, and your own AI reading
+        tutor.</p>
+    </div>
+    <div class="features-grid reveal" style="transition-delay:.2s">
+      <div class="feat-card">
+        <span class="feat-icon">📚</span>
+        <div class="feat-name">Massive Library</div>
+        <p class="feat-desc">Access millions of books, novels, and stories across every genre — full text, chapter by
+          chapter, beautifully formatted for reading.</p>
+        <span class="feat-tag">2M+ titles</span>
+      </div>
+      <div class="feat-card">
+        <span class="feat-icon">🤖</span>
+        <div class="feat-name">AI Summarizer</div>
+        <p class="feat-desc">Get 5–10 minute digests of any chapter or full book. Extract key insights, compare books,
+          and never lose track of what you've read.</p>
+        <span class="feat-tag">GPT-4 Powered</span>
+      </div>
+      <div class="feat-card">
+        <span class="feat-icon">🔍</span>
+        <div class="feat-name">Live Word Finder</div>
+        <p class="feat-desc">Select any word while reading and instantly get its definition, pronunciation, and origin.
+          Save words to your personal dictionary.</p>
+        <span class="feat-tag">Instant Lookup</span>
+      </div>
+      <div class="feat-card">
+        <span class="feat-icon">🌍</span>
+        <div class="feat-name">Word-for-Word Translation</div>
+        <p class="feat-desc">Translate entire books or selected passages into 50+ languages in real time. Perfect for
+          language learners and global readers.</p>
+        <span class="feat-tag">50+ languages</span>
+      </div>
+      <div class="feat-card">
+        <span class="feat-icon">🎧</span>
+        <div class="feat-name">Audiobooks & Podcasts</div>
+        <p class="feat-desc">Listen to any book with natural AI-generated narration. Adjust speed, bookmark moments, and
+          switch between reading and listening seamlessly.</p>
+        <span class="feat-tag">Text-to-Speech</span>
+      </div>
+      <div class="feat-card">
+        <span class="feat-icon">✍️</span>
+        <div class="feat-name">Become a Writer</div>
+        <p class="feat-desc">Write and publish your own books with an AI co-author that suggests words, titles, chapter
+          names, and improves your prose.</p>
+        <span class="feat-tag">AI Writing Assistant</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- READER SECTION -->
+  <section class="reader-section" id="reader">
+    <div class="reader-layout">
+      <div class="reveal">
+        <div class="reader-mock">
+          <div class="reader-toolbar">
+            <div class="reader-dots">
+              <span></span><span></span><span></span>
+            </div>
+            <div class="reader-toolbar-title">The Great Gatsby — Chapter 3</div>
+            <div style="font-family:'DM Mono',monospace;font-size:.58rem;color:var(--text-muted)">35% ▸</div>
+          </div>
+          <div class="reader-body">
+            <div class="reader-chapter">Chapter III</div>
+            <div class="reader-heading">The Green Light</div>
+            <p class="reader-text">
+              There was music from my neighbour's house through the summer nights. In his blue gardens men and girls
+              came and went like moths among the
+              <span class="highlight" style="position:relative">
+                whisperings
+                <span class="word-popup">whisperings /ˈwɪspərɪŋz/ — soft, hushed sounds; murmurs</span>
+              </span>
+              and the champagne and the stars. At high tide in the afternoon I watched his guests diving from the tower
+              of his raft, or taking the sun on the hot sand of his beach while his two motor-boats slit the waters of
+              the Sound, drawing
+              <span class="highlight">
+                aquaplanes
+              </span>
+              over cataracts of foam.
+            </p>
+            <div class="reader-ai-bar">
+              <div class="ai-pill active">✦ Summarize</div>
+              <div class="ai-pill">💬 Explain</div>
+              <div class="ai-pill">❓ Quiz Me</div>
+              <div class="ai-pill">🔖 Save</div>
+            </div>
+            <div class="reader-progress">
+              <div class="reader-progress-fill"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="reader-info reveal" style="transition-delay:.2s">
+        <div class="section-label">The Reading Experience</div>
+        <h2 class="section-title">Reading that<br /><em>understands you</em></h2>
+        <p class="section-sub">Every page is powered by AI — highlight a word, get instant meaning. Select a passage,
+          get an explanation. Finish a chapter, get a summary.</p>
+        <div class="feature-list">
+          <div class="feature-row">
+            <div class="feature-row-icon">💡</div>
+            <div>
+              <div class="feature-row-name">Explain Difficult Passages</div>
+              <div class="feature-row-desc">Select any confusing paragraph and AI explains it in simple language, with
+                historical or cultural context when relevant.</div>
+            </div>
+          </div>
+          <div class="feature-row">
+            <div class="feature-row-icon">🗂️</div>
+            <div>
+              <div class="feature-row-name">Chapter Digests</div>
+              <div class="feature-row-desc">Get a 2-minute summary of any chapter — key events, character moments, and
+                themes — before or after reading.</div>
+            </div>
+          </div>
+          <div class="feature-row">
+            <div class="feature-row-icon">🧠</div>
+            <div>
+              <div class="feature-row-name">Quiz Yourself</div>
+              <div class="feature-row-desc">Reinforce what you've read with AI-generated quiz questions. Track your
+                comprehension score across books.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SOCIAL SECTION -->
+  <section class="social-section" id="social">
+    <div class="social-grid">
+      <div class="reveal" style="transition-delay:.1s">
+        <div class="section-label">Community & Social</div>
+        <h2 class="section-title">Reading is<br /><em>better together</em></h2>
+        <p class="section-sub">Your profile is your reading identity. Share what you're reading, post reviews, earn
+          badges, and inspire others.</p>
+        <div class="social-features">
+          <div class="sf-row">Show your current read on your profile</div>
+          <div class="sf-row">Post reviews and story line thoughts</div>
+          <div class="sf-row">Earn Author Badges for reading 5+ books by one author</div>
+          <div class="sf-row">Follow readers with similar taste</div>
+          <div class="sf-row">Daily reading streak tracker (don't break the chain!)</div>
+          <div class="sf-row">Monthly leaderboards and reading goals</div>
+        </div>
+      </div>
+      <div class="reveal" style="transition-delay:.25s">
+        <div class="profile-mock">
+          <div class="profile-header">
+            <div class="avatar">A</div>
+            <div>
+              <div class="profile-name">Aryan Sharma</div>
+              <div class="profile-handle">@aryan.reads · 142 followers</div>
+            </div>
+            <div class="badge">📖 Author Badge × 3</div>
+          </div>
+          <div class="reading-now">
+            <div class="reading-now-label">Currently Reading</div>
+            <div class="book-card-mini">
+              <div class="book-cover-mini"></div>
+              <div>
+                <div class="book-mini-title">The Great Gatsby</div>
+                <div class="book-mini-author">F. Scott Fitzgerald</div>
+                <div class="book-mini-progress"><span></span></div>
+                <div style="font-family:'DM Mono',monospace;font-size:.58rem;color:var(--text-muted);margin-top:.4rem">
+                  62% complete</div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="reading-now-label">This Week's Streak</div>
+            <div class="streak-row">
+              <div class="streak-day read">M</div>
+              <div class="streak-day read">T</div>
+              <div class="streak-day read">W</div>
+              <div class="streak-day read">T</div>
+              <div class="streak-day read">F</div>
+              <div class="streak-day today">S</div>
+              <div class="streak-day">S</div>
+            </div>
+            <div class="streak-info">
+              🔥 <strong>14 day</strong> reading streak
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AI FEATURES -->
+  <section class="ai-section" id="ai">
+    <div class="reveal">
+      <div class="section-label">AI Intelligence</div>
+      <h2 class="section-title">Your <em>AI Reading</em><br />Companion</h2>
+      <p class="section-sub">Not just a library — a living, adaptive reading experience that helps you understand,
+        remember, and grow.</p>
+    </div>
+    <div class="ai-cards reveal" style="transition-delay:.2s">
+      <div class="ai-card">
+        <div class="ai-card-num">01</div>
+        <div class="ai-card-title">Smart Book Recommendations</div>
+        <p class="ai-card-body">Tell Biblio AI your goals, mood, or what you loved — it finds your next perfect book
+          from millions of titles.</p>
+        <div class="ai-demo">
+          <span class="label">→ You said:</span>
+          <span class="response">"I loved Atomic Habits. What should I read next?"</span>
+        </div>
+      </div>
+      <div class="ai-card">
+        <div class="ai-card-num">02</div>
+        <div class="ai-card-title">Personal Dictionary</div>
+        <p class="ai-card-body">Every word you look up can be saved to your personal dictionary with definitions,
+          example sentences, and context from where you found it.</p>
+        <div class="ai-demo">
+          <span class="label">→ Saved word:</span>
+          <span class="response">ephemeral — lasting for a very short time. "the ephemeral nature of fame"</span>
+        </div>
+      </div>
+      <div class="ai-card">
+        <div class="ai-card-num">03</div>
+        <div class="ai-card-title">Book Comparison Engine</div>
+        <p class="ai-card-body">Can't decide between two books? Biblio AI compares them side-by-side: themes, length,
+          complexity, reader reviews, and who it's best for.</p>
+        <div class="ai-demo">
+          <span class="label">→ Comparing:</span>
+          <span class="response">1984 vs Brave New World — themes, tone, difficulty, impact</span>
+        </div>
+      </div>
+      <div class="ai-card">
+        <div class="ai-card-num">04</div>
+        <div class="ai-card-title">Knowledge Growth Tracker</div>
+        <p class="ai-card-body">Track vocabulary growth, comprehension scores, genres explored, and authors discovered.
+          Watch your reading intelligence grow month over month.</p>
+        <div class="ai-demo">
+          <span class="label">→ This month:</span>
+          <span class="response">+48 new words · 3 books finished · 94% quiz accuracy</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WRITER SECTION -->
+  <section class="writer-section" id="writer">
+    <div class="writer-layout">
+      <div class="reveal">
+        <div class="section-label">Become a Writer</div>
+        <h2 class="section-title">Write your<br /><em>masterpiece</em></h2>
+        <p class="section-sub">Biblio AI's writing tools help anyone — from first-time authors to seasoned storytellers
+          — create and publish their work to the world.</p>
+        <div class="writer-perks">
+          <div class="perk">
+            <div class="perk-icon">✍️</div>
+            <div>
+              <div class="perk-title">AI Writing Assistant</div>
+              <div class="perk-desc">Get real-time word suggestions, sentence improvements, and style tips as you type.
+              </div>
+            </div>
+          </div>
+          <div class="perk">
+            <div class="perk-icon">💡</div>
+            <div>
+              <div class="perk-title">Title & Chapter Name Generator</div>
+              <div class="perk-desc">Describe your idea and AI suggests compelling titles and chapter names that fit
+                your story's tone.</div>
+            </div>
+          </div>
+          <div class="perk">
+            <div class="perk-icon">🌐</div>
+            <div>
+              <div class="perk-title">One-Click Publish</div>
+              <div class="perk-desc">When you're ready, publish directly to the Biblio AI library for millions of
+                readers to discover.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="reveal" style="transition-delay:.2s">
+        <div class="editor-mock">
+          <div class="editor-bar">
+            <span class="editor-bar-btn active">Write</span>
+            <span class="editor-bar-btn">Preview</span>
+            <span class="editor-bar-btn">Publish</span>
+            <span style="margin-left:auto;font-family:'DM Mono',monospace;font-size:.58rem;color:var(--amber)">✦ AI
+              Active</span>
+          </div>
+          <div class="editor-content">
+            <div class="editor-title">The Last Signal</div>
+            <p class="editor-body">
+              The station had been silent for forty-three days. Captain Mira pressed her palm against the cold viewport,
+              watching the distant stars burn like ancient questions no one had the courage to ask. She had stopped
+              counting the hours somewhere around day twelve, when the notion of time began to feel<span
+                class="cursor-blink"></span>
+            </p>
+            <div class="ai-suggestion">
+              "...feel as hollow as the void itself — a performance of meaning in a universe indifferent to the act."
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section class="pricing-section" id="pricing">
+    <div class="reveal" style="text-align:center;max-width:600px;margin:0 auto 4rem">
+      <div class="section-label" style="justify-content:center">Simple Pricing</div>
+      <h2 class="section-title">Start free,<br /><em>grow your library</em></h2>
+      <p class="section-sub" style="margin:0 auto">No hidden fees. No paywalls on your reading streak. Start for free
+        and upgrade when you're ready.</p>
+    </div>
+    <div class="plans reveal" style="transition-delay:.15s">
+      <div class="plan">
+        <div class="plan-name">Reader</div>
+        <div class="plan-price"><sup>$</sup>0<sub>/mo</sub></div>
+        <div class="plan-tagline">Perfect for casual readers</div>
+        <ul class="plan-features">
+          <li>Access to 50,000+ free books</li>
+          <li>Basic AI summaries (5/month)</li>
+          <li>Live word meanings</li>
+          <li>Reading tracker & streaks</li>
+          <li>Social profile & reviews</li>
+          <li class="off">Audiobooks</li>
+          <li class="off">Full translation</li>
+          <li class="off">Writer tools</li>
+        </ul>
+        <button class="plan-btn outline">Get Started</button>
+      </div>
+      <div class="plan featured">
+        <div class="plan-badge">Most Popular</div>
+        <div class="plan-name">Scholar</div>
+        <div class="plan-price"><sup>$</sup>9<sub>/mo</sub></div>
+        <div class="plan-tagline">For serious book lovers</div>
+        <ul class="plan-features">
+          <li>Unlimited library access</li>
+          <li>Unlimited AI summaries</li>
+          <li>Live word meanings + dictionary</li>
+          <li>Word-for-word translation</li>
+          <li>Audiobooks for all titles</li>
+          <li>Reading tracker, streaks & goals</li>
+          <li>AI book recommendations</li>
+          <li class="off">Writer & publish tools</li>
+        </ul>
+        <button class="plan-btn primary">Start 7-Day Free Trial</button>
+      </div>
+      <div class="plan">
+        <div class="plan-name">Author</div>
+        <div class="plan-price"><sup>$</sup>19<sub>/mo</sub></div>
+        <div class="plan-tagline">Read, write, and publish</div>
+        <ul class="plan-features">
+          <li>Everything in Scholar</li>
+          <li>Full AI writing assistant</li>
+          <li>Title & chapter generator</li>
+          <li>Publish to Biblio library</li>
+          <li>Author analytics dashboard</li>
+          <li>Podcast hosting (5 episodes)</li>
+          <li>Priority AI processing</li>
+          <li>Early access to new features</li>
+        </ul>
+        <button class="plan-btn outline">Become an Author</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-top">
+      <div class="footer-brand">
+        <div class="nav-logo" style="font-size:1.5rem">Biblio<span
+            style="-webkit-text-fill-color:var(--gold);font-style:italic;font-weight:400">AI</span></div>
+        <p>Your AI-powered reading companion. Read smarter, remember more, write boldly, and join a community of
+          passionate readers.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Product</h4>
+        <ul>
+          <li><a href="#">Features</a></li>
+          <li><a href="#">Library</a></li>
+          <li><a href="#">Audiobooks</a></li>
+          <li><a href="#">Writer Tools</a></li>
+          <li><a href="#">Mobile Apps</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Community</h4>
+        <ul>
+          <li><a href="#">Reading Clubs</a></li>
+          <li><a href="#">Leaderboards</a></li>
+          <li><a href="#">Author Profiles</a></li>
+          <li><a href="#">Reviews</a></li>
+          <li><a href="#">Events</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Company</h4>
+        <ul>
+          <li><a href="#">About Us</a></li>
+          <li><a href="#">Careers</a></li>
+          <li><a href="#">Blog</a></li>
+          <li><a href="#">Privacy Policy</a></li>
+          <li><a href="#">Terms of Use</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="footer-copy">© 2025 Biblio AI — All rights reserved</div>
+      <div class="footer-socials">
+        <a href="#">Twitter</a>
+        <a href="#">Instagram</a>
+        <a href="#">Discord</a>
+        <a href="#">LinkedIn</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // CURSOR
+    const cursor = document.getElementById('cursor');
+    const cursorRing = document.getElementById('cursorRing');
+    let mx = 0, my = 0, rx = 0, ry = 0;
+    document.addEventListener('mousemove', e => {
+      mx = e.clientX; my = e.clientY;
+      cursor.style.left = mx + 'px'; cursor.style.top = my + 'px';
+    });
+    function animRing() {
+      rx += (mx - rx) * .12; ry += (my - ry) * .12;
+      cursorRing.style.left = rx + 'px'; cursorRing.style.top = ry + 'px';
+      requestAnimationFrame(animRing);
+    }
+    animRing();
+    document.querySelectorAll('a,button,[class*="btn"],[class*="pill"],[class*="card"]').forEach(el => {
+      el.addEventListener('mouseenter', () => { cursor.style.transform = 'translate(-50%,-50%) scale(2.5)'; cursorRing.style.transform = 'translate(-50%,-50%) scale(1.4)' });
+      el.addEventListener('mouseleave', () => { cursor.style.transform = 'translate(-50%,-50%) scale(1)'; cursorRing.style.transform = 'translate(-50%,-50%) scale(1)' });
+    });
+
+    // NAVBAR SCROLL
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+      navbar.classList.toggle('scrolled', window.scrollY > 60);
+    });
+
+    // PARTICLES
+    const pWrap = document.getElementById('particles');
+    for (let i = 0; i < 22; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      const left = Math.random() * 100;
+      const dur = 8 + Math.random() * 14;
+      const delay = Math.random() * 12;
+      const drift = (Math.random() - 0.5) * 80 + 'px';
+      p.style.cssText = `left:${left}%;--drift:${drift};animation-duration:${dur}s;animation-delay:-${delay}s;opacity:0;`;
+      pWrap.appendChild(p);
+    }
+
+    // SCROLL REVEAL
+    const reveals = document.querySelectorAll('.reveal');
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target) } });
+    }, { threshold: .12, rootMargin: '0px 0px -60px 0px' });
+    reveals.forEach(r => obs.observe(r));
+
+    // WORD POPUP TOGGLE
+    const highlights = document.querySelectorAll('.highlight');
+    highlights.forEach(h => {
+      const popup = h.querySelector('.word-popup');
+      if (!popup) return;
+      popup.style.display = 'none';
+      h.addEventListener('mouseenter', () => popup.style.display = 'block');
+      h.addEventListener('mouseleave', () => popup.style.display = 'none');
+    });
+
+    // AI PILL TOGGLE
+    document.querySelectorAll('.ai-pill').forEach(p => {
+      p.addEventListener('click', () => {
+        document.querySelectorAll('.ai-pill').forEach(x => x.classList.remove('active'));
+        p.classList.add('active');
+      });
+    });
+
+    // COUNTER ANIMATION
+    function animateCount(el, target, suffix = '') {
+      let current = 0; const step = target / 60;
+      const timer = setInterval(() => {
+        current = Math.min(current + step, target);
+        el.textContent = Math.floor(current) + (suffix);
+        if (current >= target) clearInterval(timer);
+      }, 16);
+    }
+    const statsObs = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          statsObs.unobserve(e.target);
+        }
+      });
+    }, { threshold: .5 });
+  </script>
+
+  <!-- ═══════════════════════════════════════════════════════
+     BIBLIO AI — FULL BACKEND INTEGRATION LAYER
+     API Base: http://localhost:5000
+     ═══════════════════════════════════════════════════════ -->
+
+  <!-- Modal Styles -->
+  <style>
+    :root {
+      --modal-bg: rgba(9, 8, 13, 0.92);
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--modal-bg);
+      backdrop-filter: blur(12px);
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .3s;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 2.5rem;
+      width: 90%;
+      max-width: 480px;
+      max-height: 90vh;
+      overflow-y: auto;
+      transform: translateY(20px);
+      transition: transform .3s;
+      position: relative;
+    }
+
+    .modal-overlay.open .modal {
+      transform: translateY(0);
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 1rem;
+      right: 1.2rem;
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-size: 1.4rem;
+      cursor: pointer;
+      line-height: 1;
+      transition: color .2s;
+    }
+
+    .modal-close:hover {
+      color: var(--amber);
+    }
+
+    .modal h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.7rem;
+      font-weight: 800;
+      color: var(--parchment);
+      margin-bottom: .4rem;
+    }
+
+    .modal .sub {
+      font-family: 'DM Mono', monospace;
+      font-size: .68rem;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-bottom: 2rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.2rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-family: 'DM Mono', monospace;
+      font-size: .65rem;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: .5rem;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      background: rgba(255, 255, 255, .04);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: .75rem 1rem;
+      color: var(--text);
+      font-family: 'Lora', serif;
+      font-size: .9rem;
+      transition: border-color .3s;
+      outline: none;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus {
+      border-color: var(--amber);
+      background: rgba(212, 160, 60, .04);
+    }
+
+    .form-group textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .form-submit {
+      width: 100%;
+      font-family: 'DM Mono', monospace;
+      font-size: .78rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      background: var(--amber);
+      color: var(--ink);
+      border: none;
+      padding: .9rem;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all .3s;
+      margin-top: .5rem;
+    }
+
+    .form-submit:hover {
+      background: var(--pale-gold);
+    }
+
+    .form-submit:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
+
+    .form-switch {
+      text-align: center;
+      margin-top: 1.2rem;
+      font-size: .85rem;
+      color: var(--text-dim);
+    }
+
+    .form-switch a {
+      color: var(--amber);
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .form-error {
+      background: rgba(184, 74, 26, .15);
+      border: 1px solid rgba(184, 74, 26, .4);
+      color: #e88;
+      border-radius: 3px;
+      padding: .7rem 1rem;
+      font-size: .82rem;
+      margin-bottom: 1rem;
+      display: none;
+    }
+
+    .form-success {
+      background: rgba(78, 110, 82, .15);
+      border: 1px solid rgba(78, 110, 82, .4);
+      color: #8d8;
+      border-radius: 3px;
+      padding: .7rem 1rem;
+      font-size: .82rem;
+      margin-bottom: 1rem;
+      display: none;
+    }
+
+    /* AI Panel */
+    .ai-panel-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--modal-bg);
+      backdrop-filter: blur(8px);
+      z-index: 1800;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .3s;
+    }
+
+    .ai-panel-overlay.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .ai-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px 10px 0 0;
+      padding: 2rem;
+      width: 100%;
+      max-width: 680px;
+      max-height: 70vh;
+      overflow-y: auto;
+      transform: translateY(100%);
+      transition: transform .4s cubic-bezier(.22, 1, .36, 1);
+    }
+
+    .ai-panel-overlay.open .ai-panel {
+      transform: translateY(0);
+    }
+
+    .ai-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.4rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .ai-panel-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--parchment);
+    }
+
+    .ai-panel-close {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-size: 1.3rem;
+      cursor: pointer;
+      transition: color .2s;
+    }
+
+    .ai-panel-close:hover {
+      color: var(--amber);
+    }
+
+    .ai-result {
+      font-size: .92rem;
+      line-height: 1.85;
+      color: var(--text);
+      font-weight: 300;
+    }
+
+    .ai-loading {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      font-family: 'DM Mono', monospace;
+      font-size: .72rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--amber);
+    }
+
+    .ai-loading::before {
+      content: '';
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(212, 160, 60, .3);
+      border-top-color: var(--amber);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Toast Notifications */
+    .toast-container {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      z-index: 3000;
+      display: flex;
+      flex-direction: column;
+      gap: .6rem;
+    }
+
+    .toast {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: .9rem 1.3rem;
+      font-family: 'DM Mono', monospace;
+      font-size: .7rem;
+      letter-spacing: .08em;
+      color: var(--text);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, .4);
+      display: flex;
+      align-items: center;
+      gap: .7rem;
+      animation: toastIn .3s ease both;
+      max-width: 320px;
+    }
+
+    .toast.success {
+      border-color: rgba(78, 110, 82, .6);
+    }
+
+    .toast.error {
+      border-color: rgba(184, 74, 26, .6);
+    }
+
+    .toast.info {
+      border-color: var(--amber);
+    }
+
+    @keyframes toastIn {
+      from {
+        transform: translateX(40px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    /* User Menu (top nav when logged in) */
+    .user-menu {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: .8rem;
+    }
+
+    .user-avatar-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--rust), var(--amber));
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Playfair Display', serif;
+      font-weight: 700;
+      font-size: .9rem;
+      color: var(--ink);
+      transition: transform .2s, box-shadow .2s;
+    }
+
+    .user-avatar-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 4px 15px rgba(212, 160, 60, .3);
+    }
+
+    .user-dropdown {
+      position: absolute;
+      top: calc(100% + .6rem);
+      right: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: .6rem 0;
+      min-width: 200px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, .4);
+      display: none;
+      z-index: 600;
+    }
+
+    .user-dropdown.open {
+      display: block;
+    }
+
+    .user-dropdown-name {
+      padding: .6rem 1.2rem 1rem;
+      font-family: 'Playfair Display', serif;
+      font-size: .95rem;
+      font-weight: 600;
+      color: var(--parchment);
+      border-bottom: 1px solid var(--border);
+      margin-bottom: .4rem;
+    }
+
+    .user-dropdown-plan {
+      font-family: 'DM Mono', monospace;
+      font-size: .6rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--amber);
+      display: block;
+      margin-top: .2rem;
+    }
+
+    .dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: .7rem;
+      padding: .6rem 1.2rem;
+      color: var(--text-dim);
+      font-family: 'DM Mono', monospace;
+      font-size: .7rem;
+      letter-spacing: .08em;
+      cursor: pointer;
+      transition: color .2s, background .2s;
+    }
+
+    .dropdown-item:hover {
+      color: var(--amber);
+      background: rgba(212, 160, 60, .05);
+    }
+
+    .dropdown-item.danger {
+      color: rgba(184, 74, 26, .8);
+    }
+
+    .dropdown-item.danger:hover {
+      color: #e88;
+      background: rgba(184, 74, 26, .05);
+    }
+
+    /* Search Results Panel */
+    .search-results {
+      position: fixed;
+      inset: 0;
+      z-index: 1900;
+      background: var(--modal-bg);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 10vh 5vw;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .3s;
+    }
+
+    .search-results.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .search-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      width: 100%;
+      max-width: 700px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .search-input-wrap {
+      padding: 1.2rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .search-input-wrap input {
+      flex: 1;
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-family: 'Lora', serif;
+      font-size: 1.1rem;
+    }
+
+    .search-input-wrap input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .search-book-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 1rem;
+      padding: 1.5rem;
+    }
+
+    .search-book-item {
+      cursor: pointer;
+      transition: transform .2s;
+    }
+
+    .search-book-item:hover {
+      transform: translateY(-3px);
+    }
+
+    .search-book-cover {
+      width: 100%;
+      aspect-ratio: 2/3;
+      border-radius: 4px;
+      background: linear-gradient(135deg, #2a1008, #4a2010);
+      overflow: hidden;
+      margin-bottom: .6rem;
+    }
+
+    .search-book-cover img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .search-book-title {
+      font-family: 'Playfair Display', serif;
+      font-size: .8rem;
+      font-weight: 600;
+      color: var(--parchment);
+      line-height: 1.3;
+    }
+
+    .search-book-author {
+      font-family: 'DM Mono', monospace;
+      font-size: .58rem;
+      color: var(--text-muted);
+      margin-top: .2rem;
+    }
+
+    /* Quiz Styles */
+    .quiz-question {
+      margin-bottom: 1.5rem;
+    }
+
+    .quiz-question p {
+      font-size: .95rem;
+      color: var(--parchment);
+      margin-bottom: .8rem;
+      font-weight: 500;
+    }
+
+    .quiz-option {
+      display: flex;
+      align-items: center;
+      gap: .8rem;
+      padding: .65rem 1rem;
+      margin-bottom: .4rem;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all .2s;
+      font-size: .85rem;
+      color: var(--text-dim);
+    }
+
+    .quiz-option:hover {
+      border-color: var(--amber);
+      color: var(--text);
+    }
+
+    .quiz-option.correct {
+      border-color: #4e6e52;
+      background: rgba(78, 110, 82, .1);
+      color: #8d8;
+    }
+
+    .quiz-option.wrong {
+      border-color: rgba(184, 74, 26, .5);
+      background: rgba(184, 74, 26, .08);
+      color: #e88;
+    }
+
+    .quiz-explanation {
+      font-size: .82rem;
+      color: var(--text-dim);
+      margin-top: .5rem;
+      padding: .6rem .8rem;
+      background: rgba(212, 160, 60, .06);
+      border-radius: 3px;
+      border-left: 2px solid var(--amber);
+      display: none;
+    }
+
+    /* Word Panel */
+    .word-panel {
+      background: #1e1c2c;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1.4rem;
+      max-width: 340px;
+    }
+
+    .word-panel-word {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--parchment);
+    }
+
+    .word-panel-phonetic {
+      font-family: 'DM Mono', monospace;
+      font-size: .7rem;
+      color: var(--amber);
+      margin: .3rem 0 .8rem;
+    }
+
+    .word-panel-pos {
+      font-family: 'DM Mono', monospace;
+      font-size: .62rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: .5rem;
+    }
+
+    .word-panel-def {
+      font-size: .88rem;
+      line-height: 1.7;
+      color: var(--text);
+      margin-bottom: .6rem;
+    }
+
+    .word-panel-example {
+      font-size: .82rem;
+      color: var(--text-dim);
+      font-style: italic;
+      border-left: 2px solid var(--border);
+      padding-left: .8rem;
+      margin-bottom: .8rem;
+    }
+
+    .word-panel-save {
+      font-family: 'DM Mono', monospace;
+      font-size: .65rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      background: transparent;
+      border: 1px solid var(--amber);
+      color: var(--amber);
+      padding: .4rem 1rem;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all .2s;
+    }
+
+    .word-panel-save:hover {
+      background: var(--amber);
+      color: var(--ink);
+    }
+  </style>
+
+  <!-- HTML Modals & UI -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Auth Modal -->
+  <div class="modal-overlay" id="authModal">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal('authModal')">×</button>
+      <!-- Login Form -->
+      <div id="loginForm">
+        <h2>Welcome back</h2>
+        <div class="sub">Sign in to your library</div>
+        <div class="form-error" id="loginError"></div>
+        <div class="form-success" id="loginSuccess"></div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="loginEmail" placeholder="you@example.com" autocomplete="email" />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password" />
+        </div>
+        <button class="form-submit" onclick="handleLogin()">Sign In</button>
+        <div class="form-switch">
+          No account? <a onclick="switchToRegister()">Create one free →</a>
+        </div>
+      </div>
+      <!-- Register Form -->
+      <div id="registerForm" style="display:none">
+        <h2>Join Biblio AI</h2>
+        <div class="sub">Free forever. No credit card.</div>
+        <div class="form-error" id="registerError"></div>
+        <div class="form-success" id="registerSuccess"></div>
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" id="regUsername" placeholder="your_username" autocomplete="username" />
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="regEmail" placeholder="you@example.com" autocomplete="email" />
+        </div>
+        <div class="form-group">
+          <label>Display Name</label>
+          <input type="text" id="regDisplayName" placeholder="Your Name" />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="regPassword" placeholder="Min. 6 characters" autocomplete="new-password" />
+        </div>
+        <button class="form-submit" onclick="handleRegister()">Create Free Account</button>
+        <div class="form-switch">
+          Already a reader? <a onclick="switchToLogin()">Sign in →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Panel (for summaries, explanations, recommendations) -->
+  <div class="ai-panel-overlay" id="aiPanel">
+    <div class="ai-panel">
+      <div class="ai-panel-header">
+        <div class="ai-panel-title" id="aiPanelTitle">✦ AI Assistant</div>
+        <button class="ai-panel-close" onclick="closeAIPanel()">×</button>
+      </div>
+      <div id="aiPanelContent">
+        <div class="ai-loading">Thinking...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Book Search Panel -->
+  <div class="search-results" id="searchPanel">
+    <div class="search-panel">
+      <div class="search-input-wrap">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="rgba(212,160,60,0.6)">
+          <circle cx="11" cy="11" r="8" stroke-width="2" />
+          <path d="m21 21-4.35-4.35" stroke-width="2" stroke-linecap="round" />
+        </svg>
+        <input type="text" id="bookSearchInput" placeholder="Search 2M+ books..."
+          oninput="debounceSearch(this.value)" />
+        <button onclick="closeSearch()"
+          style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.2rem">×</button>
+      </div>
+      <div id="searchResultsGrid" class="search-book-grid"></div>
+    </div>
+  </div>
+
+  <!-- User Dropdown Menu (injected into nav) -->
+  <div class="user-menu" id="userMenuContainer" style="display:none">
+    <button class="user-avatar-btn" id="userAvatarBtn" onclick="toggleUserDropdown()">?</button>
+    <div class="user-dropdown" id="userDropdown">
+      <div class="user-dropdown-name" id="dropdownName">
+        Reader
+        <span class="user-dropdown-plan" id="dropdownPlan">Free Plan</span>
+      </div>
+      <div class="dropdown-item" onclick="openSearchPanel()">📚 Search Books</div>
+      <div class="dropdown-item" onclick="openAIFeature('recommend')">✦ Get Recommendations</div>
+      <div class="dropdown-item" onclick="openAIFeature('compare')">⚡ Compare Books</div>
+      <div class="dropdown-item" onclick="openAIFeature('quiz')">🧠 Quiz Yourself</div>
+      <div class="dropdown-item" onclick="openAIFeature('dictionary')">📖 My Dictionary</div>
+      <div class="dropdown-item danger" onclick="handleLogout()">Sign Out</div>
+    </div>
+  </div>
+
+  <script>
+    // ═══════════════════════════════════════════════════
+    // BIBLIO AI — API CLIENT
+    // ═══════════════════════════════════════════════════
+
+    const API = 'http://localhost:5000/api';
+    let authToken = localStorage.getItem('biblio_token');
+    let currentUser = JSON.parse(localStorage.getItem('biblio_user') || 'null');
+
+    // ─── Core API Helper ────────────────────────────────
+    async function apiCall(method, endpoint, data = null, auth = false) {
+      // Route through mock data when backend is offline
+      if (IS_DEMO) return mockApiCall(method, endpoint, data);
+
+      const headers = { 'Content-Type': 'application/json' };
+      if (auth && authToken) headers['Authorization'] = `Bearer ${authToken}`;
+
+      const options = { method, headers };
+      if (data) options.body = JSON.stringify(data);
+
+      try {
+        const res = await fetch(`${API}${endpoint}`, options);
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.message || `Request failed (${res.status})`);
+        return json;
+      } catch (err) {
+        if (err.message.includes('fetch') || err.message.includes('network') || err.message.includes('Failed to fetch')) {
+          // Backend went offline mid-session — switch to demo
+          IS_DEMO = true;
+          showSetupBanner('offline');
+          return mockApiCall(method, endpoint, data);
+        }
+        throw err;
+      }
+    }
+
+    // ─── Toast Notifications ────────────────────────────
+    function showToast(message, type = 'info', duration = 4000) {
+      const icons = { success: '✓', error: '✕', info: '✦' };
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.innerHTML = `<span style="color:${type === 'error' ? '#e88' : type === 'success' ? '#8d8' : 'var(--amber)'}">${icons[type]}</span> ${message}`;
+      container.appendChild(toast);
+      setTimeout(() => { toast.style.animation = 'toastIn .3s ease reverse both'; setTimeout(() => toast.remove(), 300); }, duration);
+    }
+
+    // ─── Modal Helpers ───────────────────────────────────
+    function openModal(id) { document.getElementById(id).classList.add('open'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+    function showFormError(id, msg) {
+      const el = document.getElementById(id);
+      el.textContent = msg; el.style.display = 'block';
+    }
+    function showFormSuccess(id, msg) {
+      const el = document.getElementById(id);
+      el.textContent = msg; el.style.display = 'block';
+    }
+    function clearFormMessages(...ids) {
+      ids.forEach(id => { const el = document.getElementById(id); if (el) { el.style.display = 'none'; el.textContent = ''; } });
+    }
+
+    function switchToRegister() {
+      document.getElementById('loginForm').style.display = 'none';
+      document.getElementById('registerForm').style.display = 'block';
+    }
+    function switchToLogin() {
+      document.getElementById('registerForm').style.display = 'none';
+      document.getElementById('loginForm').style.display = 'block';
+    }
+
+    // ─── Auth State ──────────────────────────────────────
+    function updateNavAuth() {
+      const navCta = document.querySelector('.nav-cta');
+      const userMenu = document.getElementById('userMenuContainer');
+
+      if (currentUser) {
+        if (navCta) navCta.style.display = 'none';
+        userMenu.style.display = 'flex';
+        const initial = (currentUser.displayName || currentUser.username || '?')[0].toUpperCase();
+        document.getElementById('userAvatarBtn').textContent = initial;
+        document.getElementById('dropdownName').childNodes[0].textContent = currentUser.displayName || currentUser.username;
+        document.getElementById('dropdownPlan').textContent = (currentUser.plan || 'reader').charAt(0).toUpperCase() + (currentUser.plan || 'reader').slice(1) + ' Plan';
+      } else {
+        if (navCta) navCta.style.display = '';
+        userMenu.style.display = 'none';
+      }
+    }
+
+    function toggleUserDropdown() {
+      document.getElementById('userDropdown').classList.toggle('open');
+    }
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.user-menu')) {
+        document.getElementById('userDropdown')?.classList.remove('open');
+      }
+    });
+
+    // Inject user menu into nav before the CTA
+    (function injectUserMenu() {
+      const nav = document.querySelector('nav');
+      const cta = document.querySelector('.nav-cta');
+      const menu = document.getElementById('userMenuContainer');
+      if (nav && cta && menu) nav.insertBefore(menu, cta);
+    })();
+
+    // ─── Login ───────────────────────────────────────────
+    async function handleLogin() {
+      clearFormMessages('loginError', 'loginSuccess');
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      if (!email || !password) return showFormError('loginError', 'Please fill in all fields.');
+
+      const btn = document.querySelector('#loginForm .form-submit');
+      btn.disabled = true; btn.textContent = 'Signing in...';
+
+      try {
+        const data = await apiCall('POST', '/auth/login', { email, password });
+        authToken = data.token;
+        currentUser = data.user;
+        localStorage.setItem('biblio_token', authToken);
+        localStorage.setItem('biblio_user', JSON.stringify(currentUser));
+        showFormSuccess('loginSuccess', data.message);
+        updateNavAuth();
+        setTimeout(() => { closeModal('authModal'); window.location.href = 'app.html'; }, 600);
+      } catch (err) {
+        showFormError('loginError', err.message);
+      } finally {
+        btn.disabled = false; btn.textContent = 'Sign In';
+      }
+    }
+
+    // ─── Register ────────────────────────────────────────
+    async function handleRegister() {
+      clearFormMessages('registerError', 'registerSuccess');
+      const username = document.getElementById('regUsername').value.trim();
+      const email = document.getElementById('regEmail').value.trim();
+      const displayName = document.getElementById('regDisplayName').value.trim();
+      const password = document.getElementById('regPassword').value;
+      if (!username || !email || !password) return showFormError('registerError', 'Please fill in all required fields.');
+      if (password.length < 6) return showFormError('registerError', 'Password must be at least 6 characters.');
+
+      const btn = document.querySelector('#registerForm .form-submit');
+      btn.disabled = true; btn.textContent = 'Creating account...';
+
+      try {
+        const data = await apiCall('POST', '/auth/register', { username, email, password, displayName });
+        authToken = data.token;
+        currentUser = data.user;
+        localStorage.setItem('biblio_token', authToken);
+        localStorage.setItem('biblio_user', JSON.stringify(currentUser));
+        showFormSuccess('registerSuccess', data.message);
+        updateNavAuth();
+        setTimeout(() => { closeModal('authModal'); window.location.href = 'app.html'; }, 700);
+      } catch (err) {
+        showFormError('registerError', err.message);
+      } finally {
+        btn.disabled = false; btn.textContent = 'Create Free Account';
+      }
+    }
+
+    // ─── Logout ──────────────────────────────────────────
+    function handleLogout() {
+      authToken = null; currentUser = null;
+      localStorage.removeItem('biblio_token');
+      localStorage.removeItem('biblio_user');
+      updateNavAuth();
+      showToast('Signed out. Come back soon! 📖', 'info');
+      document.getElementById('userDropdown').classList.remove('open');
+    }
+
+    // ─── AI Panel ────────────────────────────────────────
+    function openAIPanel(title) {
+      document.getElementById('aiPanelTitle').textContent = title;
+      document.getElementById('aiPanelContent').innerHTML = '<div class="ai-loading">Thinking...</div>';
+      document.getElementById('aiPanel').classList.add('open');
+    }
+    function closeAIPanel() { document.getElementById('aiPanel').classList.remove('open'); }
+    function setAIResult(html) { document.getElementById('aiPanelContent').innerHTML = html; }
+
+    async function openAIFeature(type) {
+      document.getElementById('userDropdown').classList.remove('open');
+
+      if (!currentUser) {
+        showToast('Sign in to use AI features', 'info');
+        openModal('authModal'); return;
+      }
+
+      if (type === 'recommend') {
+        const mood = prompt('What are you in the mood for? (e.g. "something like Atomic Habits", "a thriller", "sci-fi about space")');
+        if (!mood) return;
+        openAIPanel('✦ Book Recommendations');
+        try {
+          const data = await apiCall('POST', '/ai/recommend', { prompt: mood }, true);
+          const html = data.recommendations.map(b => `
+        <div style="padding:1rem;border:1px solid var(--border);border-radius:4px;margin-bottom:.8rem;background:rgba(255,255,255,.02)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem">
+            <span style="font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:600;color:var(--parchment)">${b.title}</span>
+            <span style="font-family:'DM Mono',monospace;font-size:.6rem;color:var(--amber);border:1px solid var(--amber);padding:.2rem .5rem;border-radius:2px">${b.difficulty}</span>
+          </div>
+          <div style="font-family:'DM Mono',monospace;font-size:.65rem;color:var(--text-muted);margin-bottom:.5rem">${b.author} · ${b.genre} · ~${b.pages} pages</div>
+          <div class="ai-result">${b.reason}</div>
+        </div>`).join('');
+          setAIResult(html);
+        } catch (err) { setAIResult(`<div style="color:#e88">${err.message}</div>`); }
+      }
+
+      else if (type === 'compare') {
+        const b1 = prompt('First book title:'); if (!b1) return;
+        const b2 = prompt('Second book title:'); if (!b2) return;
+        openAIPanel('⚡ Book Comparison');
+        try {
+          const data = await apiCall('POST', '/ai/compare', { book1: b1, book2: b2 }, true);
+          const c = data.comparison;
+          const html = `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.2rem">
+          ${[c.book1, c.book2].map(b => `
+          <div style="padding:1rem;border:1px solid var(--border);border-radius:4px;background:rgba(255,255,255,.02)">
+            <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:var(--parchment);margin-bottom:.5rem">${b.title}</div>
+            <div style="font-family:'DM Mono',monospace;font-size:.62rem;color:var(--amber);margin-bottom:.4rem">${b.difficulty} · ~${b.pages}p</div>
+            <div style="font-size:.8rem;color:var(--text-dim);margin-bottom:.4rem">${b.tone}</div>
+            <div style="font-size:.78rem;color:var(--text-dim)">${b.bestFor}</div>
+          </div>`).join('')}
+        </div>
+        <div style="padding:1rem;background:rgba(212,160,60,.06);border:1px solid var(--border);border-radius:4px;margin-bottom:.8rem">
+          <div style="font-family:'DM Mono',monospace;font-size:.62rem;color:var(--amber);margin-bottom:.5rem">✦ VERDICT: ${c.winner}</div>
+          <div class="ai-result">${c.summary}</div>
+        </div>`;
+          setAIResult(html);
+        } catch (err) { setAIResult(`<div style="color:#e88">${err.message}</div>`); }
+      }
+
+      else if (type === 'quiz') {
+        const text = prompt('Paste a passage you want to be quizzed on:'); if (!text || text.length < 50) return;
+        openAIPanel('🧠 Reading Comprehension Quiz');
+        try {
+          const data = await apiCall('POST', '/ai/quiz', { text }, true);
+          const html = data.quiz.questions.map((q, qi) => `
+        <div class="quiz-question" id="qq${qi}">
+          <p>${qi + 1}. ${q.question}</p>
+          ${q.options.map((opt, oi) => `
+            <div class="quiz-option" onclick="checkAnswer(${qi}, ${oi}, ${q.correct})" id="qo${qi}_${oi}">${opt}</div>
+          `).join('')}
+          <div class="quiz-explanation" id="qe${qi}">${q.explanation}</div>
+        </div>`).join('');
+          setAIResult(html);
+        } catch (err) { setAIResult(`<div style="color:#e88">${err.message}</div>`); }
+      }
+
+      else if (type === 'dictionary') {
+        if (!currentUser) { openModal('authModal'); return; }
+        openAIPanel('📖 My Personal Dictionary');
+        try {
+          const data = await apiCall('GET', '/dictionary/saved/me', null, true);
+          if (data.savedWords.length === 0) {
+            setAIResult('<div style="color:var(--text-dim);text-align:center;padding:2rem">Your dictionary is empty. Highlight words while reading to save them here!</div>');
+            return;
+          }
+          const html = data.savedWords.slice().reverse().map(w => `
+        <div style="padding:.9rem;border-bottom:1px solid var(--border)">
+          <span style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;color:var(--parchment)">${w.word}</span>
+          <span style="font-family:'DM Mono',monospace;font-size:.62rem;color:var(--amber);margin-left:.6rem">${w.phonetic || ''}</span>
+          <div style="font-size:.85rem;color:var(--text);margin-top:.3rem">${w.definition}</div>
+          ${w.example ? `<div style="font-size:.78rem;color:var(--text-dim);font-style:italic;margin-top:.2rem">"${w.example}"</div>` : ''}
+        </div>`).join('');
+          setAIResult(`<div style="font-family:'DM Mono',monospace;font-size:.65rem;color:var(--amber);margin-bottom:1rem">${data.total} SAVED WORDS</div>${html}`);
+        } catch (err) { setAIResult(`<div style="color:#e88">${err.message}</div>`); }
+      }
+    }
+
+    function checkAnswer(qi, oi, correct) {
+      for (let i = 0; i < 4; i++) {
+        const opt = document.getElementById(`qo${qi}_${i}`);
+        if (!opt) continue;
+        if (i === correct) opt.classList.add('correct');
+        else if (i === oi && oi !== correct) opt.classList.add('wrong');
+        opt.onclick = null;
+      }
+      const expl = document.getElementById(`qe${qi}`);
+      if (expl) expl.style.display = 'block';
+    }
+
+    // ─── Word Lookup (click on highlighted words) ────────
+    async function lookupWord(word, el) {
+      let popup = el.querySelector('.word-panel');
+      if (popup) { popup.remove(); return; }
+
+      // Remove other open panels first
+      document.querySelectorAll('.word-panel').forEach(p => p.remove());
+
+      const panel = document.createElement('div');
+      panel.className = 'word-panel';
+      panel.style.cssText = 'position:absolute;bottom:110%;left:50%;transform:translateX(-50%);z-index:100;width:320px';
+      panel.innerHTML = '<div class="ai-loading" style="padding:.5rem 0">Looking up...</div>';
+      el.style.position = 'relative';
+      el.appendChild(panel);
+
+      try {
+        const data = await apiCall('GET', `/dictionary/${encodeURIComponent(word)}`);
+        panel.innerHTML = `
+      <div class="word-panel-word">${data.word}</div>
+      <div class="word-panel-phonetic">${data.phonetic} · ${data.partOfSpeech}</div>
+      <div class="word-panel-def">${data.definition}</div>
+      ${data.example ? `<div class="word-panel-example">${data.example}</div>` : ''}
+      ${data.synonyms.length ? `<div style="font-family:'DM Mono',monospace;font-size:.62rem;color:var(--text-muted)">SYNONYMS: ${data.synonyms.join(', ')}</div>` : ''}
+      <br>
+      <button class="word-panel-save" onclick="saveWord('${word}', '${data.definition.replace(/'/g, "\\'")}', '${data.phonetic}', '${(data.example || '').replace(/'/g, "\\'")}')">+ Save to Dictionary</button>
+    `;
+      } catch (err) {
+        panel.innerHTML = `<div style="color:#e88;font-size:.8rem;padding:.3rem">${err.message}</div>`;
+      }
+    }
+
+    async function saveWord(word, definition, phonetic, example) {
+      if (!currentUser) { openModal('authModal'); return; }
+      try {
+        await apiCall('POST', '/dictionary/save', { word, definition, phonetic, example }, true);
+        showToast(`"${word}" saved to your dictionary!`, 'success');
+        document.querySelectorAll('.word-panel').forEach(p => p.remove());
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    // Wire up existing highlighted words
+    document.querySelectorAll('.highlight').forEach(h => {
+      const word = h.textContent.trim().replace(/[^a-zA-Z]/g, '');
+      if (!word) return;
+      h.querySelector('.word-popup')?.remove(); // remove old static popup
+      h.addEventListener('click', (e) => { e.stopPropagation(); lookupWord(word, h); });
+    });
+
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.highlight')) {
+        document.querySelectorAll('.word-panel').forEach(p => p.remove());
+      }
+    });
+
+    // ─── AI Pills (in reader section) ────────────────────
+    document.querySelectorAll('.ai-pill').forEach(pill => {
+      pill.addEventListener('click', async () => {
+        document.querySelectorAll('.ai-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+
+        const text = document.querySelector('.reader-text')?.innerText || '';
+        const action = pill.textContent.trim();
+
+        if (!currentUser) { showToast('Sign in to use AI features', 'info'); openModal('authModal'); return; }
+
+        if (action.includes('Summarize')) {
+          openAIPanel('✦ Chapter Summary');
+          try {
+            const data = await apiCall('POST', '/ai/summarize', { text, bookTitle: 'The Great Gatsby', chapter: 'Chapter III' }, true);
+            setAIResult(`<div class="ai-result">${data.summary}</div>`);
+          } catch (err) { setAIResult(`<div style="color:#e88">${err.message}</div>`); }
+        }
+        else if (action.includes('Explain')) {
+          openAIPanel('💬 Passage Explanation');
+          try {
+            const data = await apiCall('POST', '/ai/explain', { text, bookTitle: 'The Great Gatsby' }, true);
+            setAIResult(`<div class="ai-result">${data.explanation}</div>`);
+          } catch (err) { setAIResult(`<div style="color:#e88">${err.message}</div>`); }
+        }
+        else if (action.includes('Quiz')) {
+          openAIPanel('❓ Quiz: The Great Gatsby');
+          try {
+            const data = await apiCall('POST', '/ai/quiz', { text, bookTitle: 'The Great Gatsby' }, true);
+            const html = data.quiz.questions.map((q, qi) => `
+          <div class="quiz-question">
+            <p>${qi + 1}. ${q.question}</p>
+            ${q.options.map((opt, oi) => `
+              <div class="quiz-option" onclick="checkAnswer(${qi},${oi},${q.correct})" id="qo${qi}_${oi}">${opt}</div>`).join('')}
+            <div class="quiz-explanation" id="qe${qi}">${q.explanation}</div>
+          </div>`).join('');
+            setAIResult(html);
+          } catch (err) { setAIResult(`<div style="color:#e88">${err.message}</div>`); }
+        }
+      });
+    });
+
+    // ─── Book Search ──────────────────────────────────────
+    let searchDebounceTimer;
+    function openSearchPanel() {
+      document.getElementById('userDropdown').classList.remove('open');
+      document.getElementById('searchPanel').classList.add('open');
+      document.getElementById('bookSearchInput').focus();
+      loadTrendingBooks();
+    }
+    function closeSearch() { document.getElementById('searchPanel').classList.remove('open'); }
+    document.getElementById('searchPanel').addEventListener('click', e => {
+      if (e.target === document.getElementById('searchPanel')) closeSearch();
+    });
+
+    async function loadTrendingBooks() {
+      const grid = document.getElementById('searchResultsGrid');
+      grid.innerHTML = '<div style="grid-column:1/-1;font-family:\'DM Mono\',monospace;font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;color:var(--amber);padding:.5rem 0">✦ Trending</div><div class="ai-loading" style="grid-column:1/-1">Loading books...</div>';
+      try {
+        const data = await apiCall('GET', '/books/trending');
+        renderBookGrid(data.books || []);
+      } catch (err) {
+        grid.innerHTML = '<div style="grid-column:1/-1;color:var(--text-dim);font-size:.85rem;padding:1rem">Could not load books.</div>';
+      }
+    }
+
+    function debounceSearch(q) {
+      clearTimeout(searchDebounceTimer);
+      if (!q.trim()) { loadTrendingBooks(); return; }
+      searchDebounceTimer = setTimeout(() => searchBooks(q), 500);
+    }
+
+    async function searchBooks(q) {
+      const grid = document.getElementById('searchResultsGrid');
+      grid.innerHTML = '<div class="ai-loading" style="grid-column:1/-1">Searching...</div>';
+      try {
+        let data;
+        if (IS_DEMO) {
+          data = await mockApiCall('GET', `/books/search?q=${q}`, { q });
+        } else {
+          data = await fetch(`${API}/books/search?q=${encodeURIComponent(q)}&limit=12`).then(r => r.json());
+        }
+        renderBookGrid(data.books || []);
+      } catch (err) {
+        grid.innerHTML = `<div style="grid-column:1/-1;color:#e88;font-size:.82rem;padding:1rem">${err.message}</div>`;
+      }
+    }
+
+    function renderBookGrid(books) {
+      const grid = document.getElementById('searchResultsGrid');
+      if (!books.length) { grid.innerHTML = '<div style="grid-column:1/-1;color:var(--text-dim);padding:1rem">No books found.</div>'; return; }
+      grid.innerHTML = books.map(b => `
+    <div class="search-book-item" onclick="addToLibrary('${b.id}','${(b.title || '').replace(/'/g, "\\'")}','${(b.author || '').replace(/'/g, "\\'")}','${b.coverUrl || ''}')">
+      <div class="search-book-cover">
+        ${b.coverUrl ? `<img src="${b.coverUrl}" alt="${b.title}" loading="lazy" onerror="this.style.display='none'"/>` : ''}
+      </div>
+      <div class="search-book-title">${b.title}</div>
+      <div class="search-book-author">${b.author}</div>
+    </div>`).join('');
+    }
+
+    async function addToLibrary(bookId, title, author, coverUrl) {
+      if (!currentUser) { closeSearch(); openModal('authModal'); return; }
+      try {
+        await apiCall('POST', '/books/save', { bookId, title, author, coverUrl }, true);
+        showToast(`"${title}" added to your library!`, 'success');
+        closeSearch();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    // ─── Writer Section — AI Suggest Button ──────────────
+    (function addWriterAIButton() {
+      const editorContent = document.querySelector('.editor-content');
+      if (!editorContent) return;
+      const btn = document.createElement('div');
+      btn.style.cssText = 'margin-top:1rem;display:flex;gap:.7rem;flex-wrap:wrap';
+      btn.innerHTML = `
+    <button onclick="getWritingSuggestion()" style="font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;background:transparent;border:1px solid var(--amber);color:var(--amber);padding:.45rem 1rem;border-radius:2px;cursor:pointer;transition:all .2s" onmouseover="this.style.background='var(--amber)';this.style.color='var(--ink)'" onmouseout="this.style.background='transparent';this.style.color='var(--amber)'">✦ Get AI Continuation</button>
+    <button onclick="getTitleSuggestions()" style="font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;background:transparent;border:1px solid var(--border);color:var(--text-dim);padding:.45rem 1rem;border-radius:2px;cursor:pointer;transition:all .2s">💡 Suggest Titles</button>
+  `;
+      editorContent.appendChild(btn);
+    })();
+
+    async function getWritingSuggestion() {
+      if (!currentUser) { openModal('authModal'); return; }
+      const text = document.querySelector('.editor-body')?.innerText?.replace('▌', '').trim() || '';
+      openAIPanel('✦ AI Writing Continuation');
+      try {
+        const data = await apiCall('POST', '/ai/write-suggest', { text, genre: 'science fiction' }, true);
+        const suggestion = data.suggestion;
+        document.getElementById('aiPanelContent').innerHTML = `
+      <div style="margin-bottom:1rem;padding:1rem;background:rgba(212,160,60,.06);border-left:3px solid var(--amber);border-radius:0 4px 4px 0">
+        <div style="font-family:'DM Mono',monospace;font-size:.6rem;color:var(--amber);margin-bottom:.5rem">✦ AI SUGGESTS:</div>
+        <div class="ai-result">${suggestion}</div>
+      </div>
+      <button onclick="closeAIPanel()" style="font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;background:var(--amber);color:var(--ink);border:none;padding:.5rem 1.2rem;border-radius:2px;cursor:pointer">Use This →</button>
+    `;
+      } catch (err) { setAIResult(`<div style="color:#e88">${err.message}</div>`); }
+    }
+
+    async function getTitleSuggestions() {
+      if (!currentUser) { openModal('authModal'); return; }
+      const description = prompt('Describe your story in one sentence:');
+      if (!description) return;
+      openAIPanel('💡 Title & Chapter Suggestions');
+      try {
+        const data = await apiCall('POST', '/ai/title-suggest', { description, genre: 'science fiction' }, true);
+        const html = `
+      <div style="margin-bottom:1.2rem">
+        <div style="font-family:'DM Mono',monospace;font-size:.65rem;color:var(--amber);margin-bottom:.8rem">✦ TITLE IDEAS</div>
+        ${data.titles.map(t => `
+          <div style="padding:.7rem;border:1px solid var(--border);border-radius:3px;margin-bottom:.5rem;cursor:pointer;transition:border-color .2s" onmouseover="this.style.borderColor='var(--amber)'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:600;color:var(--parchment)">${t.title}</div>
+            <div style="font-size:.78rem;color:var(--text-dim);margin-top:.2rem">${t.why}</div>
+          </div>`).join('')}
+      </div>
+      <div>
+        <div style="font-family:'DM Mono',monospace;font-size:.65rem;color:var(--amber);margin-bottom:.8rem">SUGGESTED CHAPTER NAMES</div>
+        ${(data.chapterNames || []).map((c, i) => `<div style="padding:.5rem .7rem;font-size:.85rem;color:var(--text-dim);border-left:2px solid var(--border);margin-bottom:.4rem">Chapter ${i + 1}: ${c}</div>`).join('')}
+      </div>`;
+        setAIResult(html);
+      } catch (err) { setAIResult(`<div style="color:#e88">${err.message}</div>`); }
+    }
+
+    // ─── CTA Buttons ─────────────────────────────────────
+    document.querySelectorAll('.btn-primary, .nav-cta, .plan-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        const text = btn.textContent.toLowerCase();
+        if (text.includes('get started') || text.includes('start reading') ||
+          text.includes('free trial') || text.includes('become an author') ||
+          text.includes('sign up') || text.includes('create')) {
+          e.preventDefault();
+          if (!currentUser) openModal('authModal');
+          else showToast('You\'re already signed in! Use the menu to explore.', 'info');
+        }
+      });
+    });
+
+    // ─── Social Profile: Update Streak Display ───────────
+    function updateStreakDisplay() {
+      if (!currentUser?.streak) return;
+      const streak = currentUser.streak;
+      const streakInfo = document.querySelector('.streak-info');
+      if (streakInfo) {
+        streakInfo.innerHTML = `🔥 <strong>${streak.current || 0} day</strong> reading streak`;
+      }
+      const statEls = document.querySelectorAll('.stat-val');
+      statEls.forEach(el => {
+        if (el.textContent === '50+') el.textContent = `${currentUser.stats?.booksRead || 0}`;
+      });
+    }
+
+    // ─── Init ─────────────────────────────────────────────
+    updateNavAuth();
+    updateStreakDisplay();
+    checkBackend();
+
+    // ─── Demo Mode Mock Data ──────────────────────────────
+    const MOCK = {
+      user: {
+        id: 'demo_user_1', username: 'demo.reader', email: 'demo@biblioclai.com',
+        displayName: 'Demo Reader', plan: 'scholar',
+        streak: { current: 7, longest: 14, lastReadDate: new Date() },
+        stats: { booksRead: 12, wordsLookedUp: 48, quizScore: 94, quizTaken: 3 },
+        badges: [{ type: 'author', name: 'Fitzgerald Expert', description: 'Read 5+ books by F. Scott Fitzgerald' }],
+        aiUsage: { summaries: 2 }
+      },
+      books: [
+        { id: 'OL45804W', title: 'The Great Gatsby', author: 'F. Scott Fitzgerald', coverUrl: 'https://covers.openlibrary.org/b/id/8432674-M.jpg' },
+        { id: 'OL17860744W', title: 'To Kill a Mockingbird', author: 'Harper Lee', coverUrl: 'https://covers.openlibrary.org/b/id/8810494-M.jpg' },
+        { id: 'OL98746W', title: '1984', author: 'George Orwell', coverUrl: 'https://covers.openlibrary.org/b/id/8575708-M.jpg' },
+        { id: 'OL36308W', title: 'Pride and Prejudice', author: 'Jane Austen', coverUrl: 'https://covers.openlibrary.org/b/id/8739161-M.jpg' },
+        { id: 'OL27482W', title: 'Brave New World', author: 'Aldous Huxley', coverUrl: 'https://covers.openlibrary.org/b/id/8739946-M.jpg' },
+        { id: 'OL102749W', title: 'The Catcher in the Rye', author: 'J.D. Salinger', coverUrl: 'https://covers.openlibrary.org/b/id/8231432-M.jpg' },
+        { id: 'OL14963W', title: 'Fahrenheit 451', author: 'Ray Bradbury', coverUrl: 'https://covers.openlibrary.org/b/id/8228600-M.jpg' },
+        { id: 'OL19154W', title: 'The Alchemist', author: 'Paulo Coelho', coverUrl: 'https://covers.openlibrary.org/b/id/8226196-M.jpg' },
+        { id: 'OL82586W', title: 'Atomic Habits', author: 'James Clear', coverUrl: 'https://covers.openlibrary.org/b/id/10519678-M.jpg' },
+        { id: 'OL78932W', title: 'Sapiens', author: 'Yuval Noah Harari', coverUrl: 'https://covers.openlibrary.org/b/id/9276380-M.jpg' },
+        { id: 'OL11289W', title: 'The Midnight Library', author: 'Matt Haig', coverUrl: 'https://covers.openlibrary.org/b/id/10795083-M.jpg' },
+        { id: 'OL22597W', title: 'Dune', author: 'Frank Herbert', coverUrl: 'https://covers.openlibrary.org/b/id/8353449-M.jpg' },
+      ],
+      summary: `In this passage, Fitzgerald uses Gatsby's extravagant parties as a metaphor for the hollow excess of the Jazz Age. The imagery of moths and champagne contrasts natural fragility with artificial opulence. The narrator's detached observation foreshadows his growing disillusionment with Gatsby's world and the American Dream it represents.`,
+      explanation: `Fitzgerald describes Gatsby's parties with deliberately dreamlike language — "men and girls came and went like moths" suggests both the attraction to light (wealth, status) and the fleeting, fragile nature of these revellers. "Whisperings" and the contrast of stars against champagne creates an atmosphere of beautiful but insubstantial glamour. This sets the novel's central tension between surface dazzle and moral emptiness.`,
+      quiz: {
+        questions: [
+          { question: 'What does Fitzgerald compare party guests to in this passage?', options: ['A) Fireflies', 'B) Moths', 'C) Stars', 'D) Butterflies'], correct: 1, explanation: 'Fitzgerald writes "men and girls came and went like moths" — suggesting attraction to light/wealth and their fleeting presence.' },
+          { question: 'What does the imagery of "champagne and stars" primarily convey?', options: ['A) Scientific curiosity', 'B) Religious devotion', 'C) Artificial glamour versus natural beauty', 'D) The narrator\'s jealousy'], correct: 2, explanation: 'Champagne (artificial, expensive) contrasted with stars (natural, timeless) underscores the theme of hollow wealth.' },
+          { question: 'What does "aquaplanes" suggest about the party\'s atmosphere?', options: ['A) Poverty', 'B) Extreme, performative wealth', 'C) Environmental concern', 'D) Danger'], correct: 1, explanation: 'Aquaplanes (motorised watercraft) were rare luxuries — their presence signals Gatsby\'s need to display wealth conspicuously.' }
+        ]
+      },
+      recommendations: [
+        { title: 'Atomic Habits', author: 'James Clear', year: 2018, genre: 'Self-Help', reason: 'Since you loved Atomic Habits, you\'ll enjoy revisiting its core ideas. For a follow-up, this pairs well with systems thinking.', difficulty: 'easy', pages: 320 },
+        { title: 'The Power of Now', author: 'Eckhart Tolle', year: 1997, genre: 'Philosophy', reason: 'Complements the habit-building mindset with a focus on present-moment awareness and sustainable motivation.', difficulty: 'medium', pages: 236 },
+        { title: 'Deep Work', author: 'Cal Newport', year: 2016, genre: 'Productivity', reason: 'Newport\'s focus framework pairs perfectly with Clear\'s habit loops — both build toward deliberate, distraction-free excellence.', difficulty: 'easy', pages: 296 },
+        { title: 'The Psychology of Money', author: 'Morgan Housel', year: 2020, genre: 'Finance', reason: 'Applies the same compounding-small-decisions philosophy to wealth building — practical, readable, and genuinely life-changing.', difficulty: 'easy', pages: 256 }
+      ],
+      comparison: {
+        book1: { title: '1984', themes: ['Totalitarianism', 'Surveillance', 'Truth'], tone: 'Bleak, urgent, paranoid', difficulty: 'medium', bestFor: 'Readers who want a visceral warning about power and language', pages: 328, verdict: 'Essential reading for understanding authoritarianism' },
+        book2: { title: 'Brave New World', themes: ['Consumerism', 'Happiness vs Freedom', 'Technology'], tone: 'Satirical, unsettling, intellectual', difficulty: 'medium', bestFor: 'Readers interested in how pleasure can be as oppressive as pain', pages: 311, verdict: 'A subtler but equally chilling vision of dystopia' },
+        summary: 'Both are foundational dystopian novels but approach control differently: Orwell feared those who would ban books; Huxley feared there would be no reason to ban them. Read 1984 first for emotional impact, then Brave New World for philosophical depth.',
+        winner: 'Brave New World', winnerReason: 'More eerily relevant to modern tech and social media than Orwell\'s overt boot-on-face tyranny.'
+      },
+      writeSuggestion: '...feel as hollow as the void itself — a performance of meaning in a universe indifferent to the act. She pressed her palm harder against the cold viewport, as if the pressure might push meaning back through the glass.',
+      titles: [
+        { title: 'The Last Signal', why: 'Evokes isolation, final communication, and the tension between connection and silence — perfect for sci-fi' },
+        { title: 'Forty-Three Days of Silence', why: 'The specific number grounds the story in reality and creates immediate dramatic tension' },
+        { title: 'The Void Between Stars', why: 'Poetic and expansive — signals literary sci-fi with existential themes' },
+        { title: 'Static', why: 'One powerful word: communication breakdown, white noise, standing still. Memorable and genre-bending.' },
+        { title: 'What the Stars Remember', why: 'Melancholic and beautiful — positions the narrative as a meditation on memory and loss in space.' }
+      ],
+      chapterNames: ['The Forty-Third Day', 'Voices in the Noise', 'The Shape of Silence', 'Last Transmission', 'What Remains'],
+      dictionary: {
+        word: 'ephemeral', phonetic: '/ɪˈfɛm(ə)r(ə)l/', partOfSpeech: 'adjective',
+        definition: 'Lasting for a very short time; transitory.',
+        example: 'The ephemeral beauty of cherry blossoms makes them all the more precious.',
+        synonyms: ['transient', 'fleeting', 'momentary', 'brief', 'short-lived'],
+        antonyms: ['permanent', 'eternal'],
+        audioUrl: '', allMeanings: []
+      },
+      savedWords: [
+        { word: 'ephemeral', definition: 'Lasting for a very short time', phonetic: '/ɪˈfɛm(ə)r(ə)l/', example: 'The ephemeral nature of fame.' },
+        { word: 'aquaplane', definition: 'A board on which a person stands and is towed by a motorboat', phonetic: '/ˈækwəpleɪn/', example: 'They were aquaplaning over cataracts of foam.' },
+        { word: 'cataracts', definition: 'A large waterfall; also a medical condition affecting the eye', phonetic: '/ˈkætərækt/', example: 'Drawing aquaplanes over cataracts of foam.' }
+      ]
+    };
+
+    // ─── Backend Health Check + Demo Mode Setup ──────────
+    let IS_DEMO = false;
+
+    async function checkBackend() {
+      try {
+        const res = await fetch(`${API}/health`, { signal: AbortSignal.timeout(3000) });
+        const data = await res.json();
+        if (data.success) {
+          IS_DEMO = false;
+          showSetupBanner('connected', data.db);
+          console.log('%c✅ Biblio AI Backend Connected!', 'color:#d4a03c;font-size:14px;font-weight:bold');
+        }
+      } catch {
+        IS_DEMO = true;
+        showSetupBanner('offline');
+        console.log('%c📚 Biblio AI running in Demo Mode', 'color:#d4a03c;font-size:14px;font-weight:bold');
+        console.log('%cTo enable full features: cd backend && npm run dev', 'color:#888');
+      }
+    }
+
+    function showSetupBanner(status, dbStatus) {
+      // Remove existing banner
+      document.getElementById('setupBanner')?.remove();
+
+      if (status === 'connected' && dbStatus === 'connected') return; // all good, no banner needed
+
+      const banner = document.createElement('div');
+      banner.id = 'setupBanner';
+
+      if (status === 'connected' && dbStatus !== 'connected') {
+        // Server up but no DB
+        banner.style.cssText = `position:fixed;bottom:0;left:0;right:0;z-index:4000;background:#1a1520;border-top:1px solid rgba(212,160,60,0.3);padding:.8rem 5vw;display:flex;align-items:center;gap:1rem;font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.08em`;
+        banner.innerHTML = `
+      <span style="color:var(--amber)">⚠</span>
+      <span style="color:var(--text-dim)">Server running but <strong style="color:var(--amber)">MongoDB not connected</strong>. Add your MONGODB_URI to <code style="color:var(--amber);background:rgba(212,160,60,.1);padding:1px 5px;border-radius:2px">.env</code> — get a free cluster at</span>
+      <a href="https://cloud.mongodb.com" target="_blank" style="color:var(--amber);text-decoration:none">cloud.mongodb.com →</a>
+      <button onclick="document.getElementById('setupBanner').remove()" style="margin-left:auto;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1rem">×</button>`;
+      } else {
+        // Fully offline → demo mode banner
+        banner.style.cssText = `position:fixed;bottom:0;left:0;right:0;z-index:4000;background:rgba(15,14,24,0.97);border-top:1px solid rgba(212,160,60,0.25);padding:.9rem 5vw;display:flex;align-items:center;gap:1.2rem;flex-wrap:wrap;font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.08em;backdrop-filter:blur(10px)`;
+        banner.innerHTML = `
+      <span style="color:var(--amber);font-size:.8rem">✦</span>
+      <span style="color:var(--parchment);font-weight:600">DEMO MODE</span>
+      <span style="color:var(--text-dim)">Backend not running — all features work with sample data.</span>
+      <span style="color:var(--text-muted)">To go live:</span>
+      <code style="color:var(--amber);background:rgba(212,160,60,.08);padding:2px 8px;border-radius:2px;border:1px solid rgba(212,160,60,.2)">cd backend && npm run dev</code>
+      <div style="margin-left:auto;display:flex;gap:.8rem;align-items:center">
+        <a href="https://github.com" target="_blank" style="color:var(--text-dim);text-decoration:none;transition:color .2s" onmouseover="this.style.color='var(--amber)'" onmouseout="this.style.color='var(--text-dim)'">Setup Guide →</a>
+        <button onclick="document.getElementById('setupBanner').remove()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.1rem;line-height:1;padding:0 .2rem">×</button>
+      </div>`;
+      }
+      document.body.appendChild(banner);
+    }
+
+    // ─── Mock API responses for demo mode ─────────────────
+    function mockApiCall(method, endpoint, data) {
+      return new Promise((resolve, reject) => {
+        setTimeout(() => { // simulate network delay
+          // AUTH
+          if (endpoint === '/auth/login') {
+            if (data.email && data.password) {
+              const u = { ...MOCK.user, email: data.email };
+              resolve({ success: true, message: `Welcome back, ${u.displayName}!`, token: 'demo_token_xyz', user: u });
+            } else reject(new Error('Please fill in all fields.'));
+            return;
+          }
+          if (endpoint === '/auth/register') {
+            const u = { ...MOCK.user, username: data.username, email: data.email, displayName: data.displayName || data.username };
+            resolve({ success: true, message: `Welcome to Biblio AI, ${u.displayName}! 🎉`, token: 'demo_token_xyz', user: u });
+            return;
+          }
+          if (endpoint === '/auth/me') { resolve({ success: true, user: MOCK.user }); return; }
+
+          // BOOKS
+          if (endpoint.startsWith('/books/search')) {
+            const q = (data?.q || endpoint.split('q=')[1]?.split('&')[0] || '').toLowerCase();
+            const filtered = MOCK.books.filter(b => !q || b.title.toLowerCase().includes(q) || b.author.toLowerCase().includes(q));
+            resolve({ success: true, books: filtered.length ? filtered : MOCK.books, total: filtered.length });
+            return;
+          }
+          if (endpoint === '/books/trending') { resolve({ success: true, books: MOCK.books }); return; }
+          if (endpoint === '/books/save') { resolve({ success: true, message: `"${data.title}" added to your library! (Demo)` }); return; }
+          if (endpoint === '/books/progress') { resolve({ success: true, message: 'Progress saved! (Demo)', streak: MOCK.user.streak }); return; }
+          if (endpoint === '/books/library/me') { resolve({ success: true, library: [], streak: MOCK.user.streak, stats: MOCK.user.stats, badges: MOCK.user.badges }); return; }
+          if (endpoint === '/books/review') { resolve({ success: true, message: 'Review saved! (Demo)' }); return; }
+
+          // AI
+          if (endpoint === '/ai/summarize') { resolve({ success: true, summary: MOCK.summary }); return; }
+          if (endpoint === '/ai/explain') { resolve({ success: true, explanation: MOCK.explanation }); return; }
+          if (endpoint === '/ai/quiz') { resolve({ success: true, quiz: MOCK.quiz }); return; }
+          if (endpoint === '/ai/recommend') { resolve({ success: true, recommendations: MOCK.recommendations }); return; }
+          if (endpoint === '/ai/compare') { resolve({ success: true, comparison: MOCK.comparison }); return; }
+          if (endpoint === '/ai/write-suggest') { resolve({ success: true, suggestion: MOCK.writeSuggestion }); return; }
+          if (endpoint === '/ai/title-suggest') { resolve({ success: true, titles: MOCK.titles, chapterNames: MOCK.chapterNames }); return; }
+
+          // DICTIONARY
+          if (endpoint.startsWith('/dictionary/') && method === 'GET' && !endpoint.includes('saved')) {
+            const word = endpoint.split('/dictionary/')[1];
+            resolve({ success: true, ...MOCK.dictionary, word: word || 'ephemeral' });
+            return;
+          }
+          if (endpoint === '/dictionary/save') { resolve({ success: true, message: `"${data.word}" saved! (Demo)`, savedWords: MOCK.savedWords }); return; }
+          if (endpoint === '/dictionary/saved/me') { resolve({ success: true, savedWords: MOCK.savedWords, total: MOCK.savedWords.length }); return; }
+          if (endpoint === '/dictionary/translate') { resolve({ success: true, original: data.text, translated: '[Demo] Translation unavailable in demo mode. Start backend for live translation.', from: data.sourceLang, to: data.targetLang }); return; }
+
+          // SOCIAL
+          if (endpoint === '/social/leaderboard') {
+            resolve({
+              success: true, leaderboard: [
+                { rank: 1, username: 'avid.reader', displayName: 'Avid Reader', booksRead: 34, streak: 21, badges: 5, plan: 'author' },
+                { rank: 2, username: 'demo.reader', displayName: 'Demo Reader', booksRead: 12, streak: 7, badges: 1, plan: 'scholar' },
+                { rank: 3, username: 'bookworm99', displayName: 'Bookworm', booksRead: 9, streak: 3, badges: 2, plan: 'reader' },
+              ]
+            });
+            return;
+          }
+
+          // Default fallback
+          resolve({ success: true, message: 'Demo mode — connect backend for live data.' });
+        }, 600 + Math.random() * 400);
+      });
+    }
+  </script>
+</body>
+
+</html>

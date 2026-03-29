@@ -1,0 +1,13 @@
+# Secrets — NEVER push these
+backend/.env
+
+# Dependencies
+node_modules/
+backend/node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
